@@ -97,6 +97,7 @@ body {
   margin-left: 280px;
   padding: 40px;
   min-height: 100vh;
+  transition: var(--transition);
 }
 
 .nav-link {
@@ -154,9 +155,24 @@ body {
   text-transform: uppercase;
 }
 
-.badge-pending { background: #fef3c7; color: #92400e; }
-.badge-approved { background: #dcfce7; color: #166534; }
-.badge-rejected { background: #fee2e2; color: #991b1b; }
+.badge-pending { background: #fef3c7; color: #92400e; } /* Yellow for initial pending */
+.badge-pending_hr { background: #e0f2fe; color: #0369a1; } /* Blue for HR step */
+.badge-approved { background: #dcfce7; color: #166534; } /* Green for approved */
+.badge-rejected { background: #fee2e2; color: #991b1b; } /* Red for rejected */
+
+.dashboard-content-grid {
+    display: grid;
+    grid-template-columns: 2fr 1.2fr;
+    gap: 32px;
+    margin-top: 32px;
+}
+
+@media (max-width: 992px) {
+    .dashboard-content-grid {
+        grid-template-columns: 1fr !important;
+        gap: 24px !important;
+    }
+}
 
 /* Calendar Styles */
 .calendar-grid {
@@ -174,6 +190,31 @@ body {
   border-radius: 8px;
   font-size: 0.875rem;
   font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.calendar-day:hover:not(.empty) {
+  background: var(--primary-soft);
+  color: var(--primary);
+  transform: scale(1.05);
+}
+
+.calendar-day.empty {
+  cursor: default;
+}
+
+.day-active {
+  border: 1.5px solid var(--primary);
+  font-weight: 800;
+  color: var(--primary);
+}
+
+.day-vacation {
+  background: var(--tertiary) !important;
+  color: white !important;
+  border-radius: 50% !important;
+  font-weight: 800;
 }
 
 .calendar-header {
@@ -216,28 +257,142 @@ body {
   animation: fadeIn 0.5s ease-out forwards;
 }
 
-/* Signature Pad mockup */
-.signature-box {
+/* Signature Pad */
+.signature-container {
   border: 2px dashed #cbd5e1;
-  border-radius: 12px;
-  height: 120px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #94a3b8;
-  font-style: italic;
   background: #f8fafc;
+  border-radius: 8px;
+  position: relative;
+  margin-top: 8px;
+  width: 100%;
+  overflow: hidden;
 }
 
-/* Responsive */
-@media (max-width: 1024px) {
-  .sidebar { width: 80px; }
-  .sidebar span:not(.material-symbols-outlined) { display: none; }
-  .main-content { margin-left: 80px; }
-  .nav-link { justify-content: center; padding: 20px 0; }
+.signature-canvas {
+  width: 100%;
+  height: 150px;
+  cursor: crosshair;
+  touch-action: none; /* Prevent scrolling while signing */
 }
 
-@media (max-width: 640px) {
-  .sidebar { display: none; }
-  .main-content { margin-left: 0; padding: 20px; }
+.signature-img {
+  max-height: 40px;
+  max-width: 100%;
+  object-fit: contain;
+  filter: contrast(120%) brightness(90%);
+  mix-blend-mode: multiply; /* Make signature background blend */
+}
+
+.signature-clear {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 4px 8px;
+  font-size: 0.75rem;
+  background: rgba(0,0,0,0.05);
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+/* Signature Pad mockup (Removing old placeholder) */
+.signature-box {
+  display: none;
+}
+
+/* Bottom Nav for Mobile */
+.mobile-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  border-top: 1px solid #e2e8f0;
+  z-index: 1000;
+  padding: 8px 12px;
+  justify-content: space-around;
+  box-shadow: 0 -4px 6px -1px rgba(0,0,0,0.05);
+}
+
+.mobile-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 0.65rem;
+  font-weight: 600;
+  gap: 4px;
+}
+
+.mobile-nav-item.active {
+  color: var(--primary);
+}
+
+.mobile-nav-item .material-symbols-outlined {
+  font-size: 24px;
+}
+
+/* BOTÓN CERRAR SESIÓN FLOTANTE / RESPONSIVE */
+.logout-btn-header {
+    background: #f1f5f9;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--primary);
+    border: 1px solid #e2e8f0;
+}
+
+/* RESPONSIVE SYSTEM - OVERRIDE */
+@media (min-width: 993px) {
+    .mobile-nav { display: none !important; }
+}
+
+@media (max-width: 992px) {
+  .sidebar { 
+      display: none !important; 
+  }
+  .main-content { 
+      margin-left: 0 !important; 
+      padding: 16px 16px 100px !important; 
+      width: 100% !important;
+  }
+  .mobile-nav { 
+      display: flex !important; 
+  }
+  
+  /* Arreglo de superposición de texto en Dashboard */
+  header div {
+      flex-direction: column;
+      align-items: flex-start !important;
+      gap: 16px;
+  }
+  
+  .logout-btn-header {
+      align-self: flex-start;
+  }
+
+  .stat-grid { 
+      grid-template-columns: 1fr !important; 
+      gap: 12px !important;
+  }
+  
+  .card { 
+      padding: 16px !important; 
+  }
+
+  h1 { font-size: 1.6rem !important; }
+  
+  /* Tablas responsivas */
+  table th:nth-child(2), table td:nth-child(2),
+  table th:nth-child(3), table td:nth-child(3) {
+     display: none; 
+  }
+}
+
+@media (max-width: 480px) {
+    h1 { font-size: 1.4rem !important; }
+    .stat-card .value { font-size: 1.5rem !important; }
 }
