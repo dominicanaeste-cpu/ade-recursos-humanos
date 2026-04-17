@@ -1,5 +1,5 @@
 // Service Worker para cumplimiento PWA y modo offline básico (caché de UI)
-const CACHE_NAME = 'ade-32';
+const CACHE_NAME = 'ade-v2026-v2';
 const ASSETS = [
   './',
   './index.html',

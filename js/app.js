@@ -334,9 +334,53 @@ const app = {
 
             <!-- Right Column: Actions and Lists -->
             <div style="display: flex; flex-direction: column; gap: 32px;">
+                <!-- Quick Actions Section -->
+                <section class="card" style="border: none; background: transparent; padding: 0; margin-bottom: 32px;">
+                    <h2 style="font-family: 'Outfit', sans-serif; font-size: 1.3rem; color: var(--primary); margin-bottom: 24px; display: flex; align-items: center; gap: 12px; font-weight: 800;">
+                        <span class="material-symbols-outlined" style="background: var(--primary); color: white; padding: 8px; border-radius: 12px; font-size: 1.4rem;">rocket_launch</span>
+                        Accesos Rápidos de Gestión
+                    </h2>
+                    <div style="display: grid; grid-template-columns: 1fr; gap: 16px;">
+                        <!-- Vacation Card -->
+                        <div class="action-card-premium" onclick="app.navigate('form', event)" style="border-left: 6px solid var(--primary);">
+                            <div class="icon-box" style="background: rgba(47, 85, 127, 0.1); color: var(--primary);">
+                                <span class="material-symbols-outlined" style="font-size: 2rem;">calendar_add_on</span>
+                            </div>
+                            <div style="flex: 1;">
+                                <h4 style="margin: 0; font-size: 1rem; font-weight: 800; color: var(--primary); line-height: 1.2;">Solicitar Vacaciones</h4>
+                                <p style="margin: 4px 0 0 0; font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">Inicia un nuevo proceso de descanso reglamentario.</p>
+                            </div>
+                            <span class="material-symbols-outlined" style="color: #cbd5e1;">chevron_right</span>
+                        </div>
+
+                        <!-- Medical License Card -->
+                        <div class="action-card-premium" onclick="app.requestLicense('Médica')" style="border-left: 6px solid #10b981;">
+                            <div class="icon-box" style="background: rgba(16, 185, 129, 0.1); color: #059669;">
+                                <span class="material-symbols-outlined" style="font-size: 2rem;">medical_services</span>
+                            </div>
+                            <div style="flex: 1;">
+                                <h4 style="margin: 0; font-size: 1rem; font-weight: 800; color: #059669; line-height: 1.2;">Licencia Médica</h4>
+                                <p style="margin: 4px 0 0 0; font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">Reporta reposo de salud con certificado oficial.</p>
+                            </div>
+                            <span class="material-symbols-outlined" style="color: #cbd5e1;">chevron_right</span>
+                        </div>
+
+                        <!-- Special Licenses (Grid) -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            <div class="action-card-premium mini" onclick="app.requestLicense('Casamiento')" style="background: #fff1f2; border: 1px solid #fecaca; flex-direction: column; text-align: center; justify-content: center; gap: 8px;">
+                                <span class="material-symbols-outlined" style="color: #be123c; font-size: 1.5rem;">favorite</span>
+                                <span style="font-weight: 800; font-size: 0.8rem; color: #be123c;">Casamiento (5d)</span>
+                            </div>
+                            <div class="action-card-premium mini" onclick="app.requestLicense('Fallecimiento')" style="background: #f8fafc; border: 1px solid #e2e8f0; flex-direction: column; text-align: center; justify-content: center; gap: 8px;">
+                                <span class="material-symbols-outlined" style="color: #475569; font-size: 1.5rem;">person_off</span>
+                                <span style="font-weight: 800; font-size: 0.8rem; color: #475569;">Fallecimiento (3d)</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
                 <section class="card">
-                    <h2 style="font-size: 1.1rem; color: var(--primary); margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
-                    <h2 style="font-size: 1.1rem; color: var(--primary); margin-bottom: 20px;">Mis Solicitudes Personales</h2>
+                    <h2 style="font-size: 1.1rem; color: var(--primary); margin-bottom: 20px; font-weight: 800;">Mis Solicitudes Personales</h2>
                     <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
                         <thead><tr style="text-align: left; border-bottom: 2px solid #f1f5f9; color: var(--text-muted);"><th style="padding: 12px 0;">Licencia</th><th style="padding: 12px 0;">Días</th><th style="padding: 12px 0; text-align: center;">Estatus</th></tr></thead>
                         <tbody>
@@ -350,6 +394,37 @@ const app = {
                         </tbody>
                     </table>
                 </section>
+
+                <style>
+                    .action-card-premium {
+                        background: white;
+                        padding: 24px;
+                        border-radius: 24px;
+                        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+                        display: flex;
+                        align-items: center;
+                        gap: 20px;
+                        cursor: pointer;
+                        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                        border: 1px solid #f1f5f9;
+                    }
+                    .action-card-premium:hover {
+                        transform: translateY(-5px) scale(1.01);
+                        box-shadow: 0 25px 30px -10px rgba(0,0,0,0.08);
+                        border-color: var(--primary);
+                    }
+                    .action-card-premium.mini:hover {
+                        background: white !important;
+                    }
+                    .icon-box {
+                        width: 60px;
+                        height: 60px;
+                        border-radius: 16px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    }
+                </style>
             </div>
         </div>
       `;
