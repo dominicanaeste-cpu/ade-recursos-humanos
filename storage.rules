@@ -1,0 +1,9 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /{allPaths=**} {
+      // Permitir lectura y escritura para el sistema de gestión de vacaciones
+      allow read, write: if true;
+    }
+  }
+}

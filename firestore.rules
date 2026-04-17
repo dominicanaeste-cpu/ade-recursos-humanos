@@ -1,0 +1,11 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Reglas para ADE Vacaciones
+    // Nota: Se permite acceso general por ahora para asegurar funcionalidad inmediata,
+    // eliminando el bloqueo por fecha de vencimiento.
+    match /{document=**} {
+      allow read, write: if true; 
+    }
+  }
+}

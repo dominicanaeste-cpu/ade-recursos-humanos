@@ -14,6 +14,7 @@ let gisInited = false;
 const app = {
   activeView: 'login', // Iniciar en el nuevo login
   currentRole: 'employee',
+  deferredPrompt: null, // Guardar evento de instalación PWA
   currentFilter: 'All',
   currentAuditYear: new Date().getFullYear(),
   isSubmitting: false,
@@ -84,15 +85,15 @@ const app = {
                 
                 <div class="card fade-in glass" style="width: 100%; max-width: 440px; padding: 56px; text-align: center; border: 1px solid rgba(255, 255, 255, 0.2); position: relative; box-shadow: 0 40px 100px rgba(0,0,0,0.5); background: rgba(255,255,255,0.06) !important; border-radius: 32px;">
                     
-                    <!-- Institutional Logo (ADE Text Circle) -->
-                    <div style="width: 110px; height: 110px; background: rgba(255,255,255,0.15); backdrop-filter: blur(5px); border-radius: 50%; padding: 6px; margin: 0 auto 32px; box-shadow: 0 0 40px rgba(250, 169, 45, 0.2); transform: translateY(-10px);">
-                        <div style="width: 100%; height: 100%; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                            <span style="font-family: 'Outfit', sans-serif; font-size: 2.2rem; font-weight: 800; color: #1e3a8a; letter-spacing: -1px;">ADE</span>
+                    <!-- Institutional Logo (Circular Image) -->
+                    <div style="width: 120px; height: 120px; background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); border-radius: 50%; padding: 8px; margin: 0 auto 32px; box-shadow: 0 15px 35px rgba(0,0,0,0.3); transform: translateY(-10px); border: 1px solid rgba(255,255,255,0.2);">
+                        <div style="width: 100%; height: 100%; background: white; border-radius: 50%; overflow: hidden;">
+                            <img src="assets/Logo_Iglesia.jpeg" alt="ADE" style="width: 100%; height: 100%; object-fit: cover;">
                         </div>
                     </div>
 
                     <h1 style="font-family: 'Outfit', sans-serif; font-size: 1.6rem; font-weight: 800; color: white; margin-bottom: 8px; letter-spacing: 0.05rem;">ASOCIACIÓN DOMINICANA DEL ESTE</h1>
-                    <p style="color: var(--secondary); font-size: 1.1rem; font-weight: 800; margin-bottom: 48px; letter-spacing: 0.1rem; text-transform: uppercase;">Recursos Humanos</p>
+                    <p style="color: var(--secondary); font-size: 1.3rem; font-weight: 800; margin-bottom: 48px; letter-spacing: 0.1rem; text-transform: uppercase;">ADE app</p>
                     
                     <form onsubmit="app.handleLogin(event)" style="text-align: left;">
                         <div style="margin-bottom: 28px;">
@@ -111,6 +112,18 @@ const app = {
                             Acceder al Sistema
                         </button>
                     </form>
+
+                    ${app.deferredPrompt ? `
+                    <div id="pwa-install-banner" class="fade-in" style="margin-top: 32px; padding: 20px; background: rgba(255,255,255,0.1); border: 1px dashed var(--secondary); border-radius: 20px; display: flex; align-items: center; gap: 15px; cursor: pointer;" onclick="app.installPWA()">
+                        <div style="width: 48px; height: 48px; background: var(--secondary); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                            <span class="material-symbols-outlined" style="color: var(--primary); font-size: 24px;">download</span>
+                        </div>
+                        <div style="text-align: left;">
+                            <p style="color: white; font-size: 0.85rem; font-weight: 800; margin: 0;">INSTALAR APLICACIÓN</p>
+                            <p style="color: rgba(255,255,255,0.6); font-size: 0.7rem; margin: 2px 0 0;">Acceso directo en tu pantalla</p>
+                        </div>
+                    </div>
+                    ` : ''}
                     
                     <p style="margin-top: 40px; color: rgba(255, 255, 255, 0.4); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em;">© 2026 Asociación Dominicana del Este</p>
                 </div>
@@ -193,13 +206,13 @@ const app = {
         <!-- Stats Grid -->
         <div class="stat-grid fade-in">
             <div class="stat-card" style="border-left-color: var(--primary);">
-                <h3>Semanas de Ciclo</h3>
-                <div class="value">${(state.user.fullWeeksPerYear || 0).toString().padStart(2, '0')}</div>
+                <h3>Días de Ciclo</h3>
+                <div class="value">${((state.user.fullWeeksPerYear || 0) * 7).toString().padStart(2, '0')}</div>
                 <p style="font-size: 0.7rem; color: var(--text-muted); margin-top: 4px;">Asignación Reglamentaria 2026</p>
             </div>
             <div class="stat-card" style="border-left-color: var(--tertiary);">
-                <h3>Semanas Restantes</h3>
-                <div class="value">${weeksAvailable.toString().padStart(2, '0')}</div>
+                <h3>Días Restantes</h3>
+                <div class="value">${(state.user.remainingDays || 0).toString().padStart(2, '0')}</div>
                 <p style="font-size: 0.7rem; color: var(--tertiary); margin-top: 4px;">Balance oficial institucional</p>
             </div>
             ${(state.user && state.user.permissions && state.user.permissions.length > 0 || (state.user && state.user.role !== 'employee')) ? `
@@ -212,14 +225,14 @@ const app = {
             <div class="stat-card" style="background: var(--primary); color: white; border-left: none; position: relative; overflow: hidden;">
                 <h3 style="color: rgba(255,255,255,0.7);">AÑOS DE SERVICIO</h3>
                 <div class="value" style="color: var(--secondary); font-size: 1.5rem;">${state.user.yearsOfService || 0} Años</div>
-                <p style="font-size: 0.8rem; color: #ffffff; font-weight: 800; margin-top: 4px;">Reglamento UD: ${state.getWeeksByServiceYears(state.user.yearsOfService || 0)} Semanas</p>
+                <p style="font-size: 0.8rem; color: #ffffff; font-weight: 800; margin-top: 4px;">Reglamento UD: ${state.getWeeksByServiceYears(state.user.yearsOfService || 0) * 7} Días</p>
                 <span class="material-symbols-outlined" style="position: absolute; bottom: -10px; right: -10px; font-size: 80px; opacity: 0.1;">workspace_premium</span>
             </div>
         </div>
 
         <div style="margin-bottom: 24px; display: flex; gap: 16px;">
             <button class="btn fade-in" style="flex: 1; justify-content: center; background: var(--secondary); color: white; border: none; padding: 16px; font-size: 0.9rem; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); font-weight: 800;" onclick="app.navigate('annual_plan_form')">
-                <span class="material-symbols-outlined" style="font-size: 1.2rem;">event_note</span> PLANIFICACIÓN ANUAL
+                <span class="material-symbols-outlined" style="font-size: 1.2rem;">event_note</span> PLANIFICACIÓN ANUAL DE VACACIONES
             </button>
             <div style="flex: 1; display: flex; flex-direction: column; gap: 8px;">
                 <button class="btn fade-in" style="width: 100%; justify-content: center; background: #be185d; color: white; border: none; padding: 16px; font-size: 0.9rem; border-radius: 12px; box-shadow: 0 4px 14px -4px rgba(190, 24, 93, 0.4); font-weight: 800;" onclick="app.navigate('conflicto_form')">
@@ -253,6 +266,7 @@ const app = {
                         const firstDay = new Date(year, month, 1).getDay();
                         const daysInMonth = new Date(year, month + 1, 0).getDate();
                         const today = new Date();
+                        today.setHours(0,0,0,0);
                         const holidays = {'1/1':'Año Nuevo','6/1':'Día de Reyes','21/1':'Altagracia','26/1':'Duarte','27/2':'Independencia','1/5':'Trabajo','16/8':'Restauración','24/9':'Mercedes','6/11':'Constitución','25/12':'Navidad'};
                         
                         let slots = [];
@@ -260,20 +274,28 @@ const app = {
                         for (let d = 1; d <= daysInMonth; d++) {
                             const isToday = today.getDate() === d && today.getMonth() === month && today.getFullYear() === year;
                             const hKey = `${d}/${month + 1}`;
+                            const current = new Date(year, month, d, 0, 0, 0); // Local Midnight
                             
                             const myVacation = (state.vacationRequests || []).find(r => {
-                                const start = new Date(r.startDate); const end = new Date(r.endDate); const current = new Date(year, month, d);
-                                return current >= start && current <= end && (r.idEmpleado === state.user.id || r.userId === state.user.id);
+                                const start = new Date(r.startDate + 'T00:00:00'); 
+                                const end = new Date(r.endDate + 'T00:00:00');
+                                const empId = r.employeeId || r.idEmpleado || r.userId;
+                                const isMine = String(empId) === String(state.user.id);
+                                return current >= start && current <= end && isMine;
                             });
                             
                             const othersVacation = (state.vacationRequests || []).find(r => {
-                                const start = new Date(r.startDate); const end = new Date(r.endDate); const current = new Date(year, month, d);
-                                return current >= start && current <= end && (r.idEmpleado !== state.user.id && (r.supervisor === state.user.supervisorDept || state.user.permissions.includes('hr')));
+                                const start = new Date(r.startDate + 'T00:00:00'); 
+                                const end = new Date(r.endDate + 'T00:00:00');
+                                const empId = r.employeeId || r.idEmpleado || r.userId;
+                                const isMine = String(empId) === String(state.user.id);
+                                const isDept = r.supervisor === state.user.name || r.supervisor === state.user.supervisorDept || (state.user.permissions && state.user.permissions.includes('hr'));
+                                // Solo mostramos solicitudes en curso (aprobadas o pendientes de revisión)
+                                return current >= start && current <= end && !isMine && isDept && r.status !== 'rejected';
                             });
 
                             let bgColor = ''; let textColor = ''; let classList = [];
                             if (isToday) classList.push('day-active');
-                            if (holidays[hKey]) classList.push('day-holiday');
                             
                             if (myVacation) {
                                 classList.push('day-vacation-personal');
@@ -283,6 +305,7 @@ const app = {
                                 classList.push('day-vacation-dept');
                                 bgColor = '#dcfce7'; textColor = '#166534';
                             } else if (holidays[hKey]) {
+                                classList.push('day-holiday');
                                 bgColor = '#ffedd5'; textColor = '#9a3412';
                             }
                             
@@ -355,7 +378,7 @@ const app = {
         <header class="fade-in" style="margin-bottom: 32px;">
              <div style="display: flex; align-items: flex-start; justify-content: space-between;">
                 <div>
-                        <h1 style="font-size: 1.8rem; font-weight: 800; color: var(--primary);">Panel del Director</h1>
+                        <h1 style="font-size: 1.8rem; font-weight: 800; color: var(--primary);">Panel de Administrador</h1>
                         <p style="color: var(--text-muted); font-weight: 500;">Gestión de solicitudes para: <span style="color: var(--secondary); font-weight: 800;">${roleName.toUpperCase()}</span></p>
                     </div>
                     <div style="display: flex; gap: 12px; align-items: center;">
@@ -373,6 +396,52 @@ const app = {
                     </div>
             </div>
         </header>
+
+        <!-- CRONO MOVIMIENTOS (INSTITUCIONAL) - PRIORIDAD ALTA -->
+        <section class="card fade-in" style="margin-bottom: 32px; background: white; padding: 0; overflow: hidden; border: 1px solid #e2e8f0; border-top: 5px solid #0891b2;">
+            <div style="padding: 24px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.4rem; font-weight: 800; color: #0891b2; margin: 0;">🌍 Control Cronológico - Nivel Institucional</h3>
+                <span class="badge" style="background: #ecfeff; color: #0e7490; font-weight: 800;">TODOS LOS MOVIMIENTOS</span>
+            </div>
+            <div style="overflow-x: auto; max-height: 400px;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                    <thead style="background: #f8fafc; border-bottom: 2px solid #e2e8f0;">
+                         <tr style="text-align: left;">
+                            <th style="padding: 16px; font-weight: 800; color: #64748b;">Colaborador</th>
+                            <th style="padding: 16px; font-weight: 800; color: #64748b;">Salida</th>
+                            <th style="padding: 16px; font-weight: 800; color: #64748b;">Regreso</th>
+                            <th style="padding: 16px; font-weight: 800; color: #64748b; text-align: center;">Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${(() => {
+                            const approved = (state.vacationRequests || []).filter(r => r.status === 'approved');
+                            const sorted = approved.sort((a,b) => new Date(a.startDate) - new Date(b.startDate));
+                            const today = new Date().toISOString().split('T')[0];
+                            
+                            if (sorted.length === 0) return '<tr><td colspan="4" style="text-align:center; padding:32px; color:#64748b;">No hay movimientos aprobados registrados aún.</td></tr>';
+                            
+                            return sorted.map(r => `
+                            <tr style="border-bottom: 1px solid #f1f5f9;">
+                                <td style="padding: 16px; font-weight: 700; color: #1e3a8a;">${r.employeeName}</td>
+                                <td style="padding: 16px; font-weight: 800; color: #0891b2;">${r.startDate}</td>
+                                <td style="padding: 16px; font-weight: 800; color: #0d9488;">${r.endDate}</td>
+                                <td style="padding: 16px; text-align: center;">
+                                    ${r.startDate > today ? 
+                                        `<span style="background: #e0f2fe; color: #0369a1; padding: 4px 10px; border-radius: 999px; font-size: 0.65rem; font-weight: 800;">PROGRAMADO</span>` : 
+                                        (r.endDate >= today ? 
+                                            `<span style="background: #f0fdf4; color: #166534; padding: 4px 10px; border-radius: 999px; font-size: 0.65rem; font-weight: 800;">EN CURSO</span>` :
+                                            `<span style="background: #f1f5f9; color: #64748b; padding: 4px 10px; border-radius: 999px; font-size: 0.65rem; font-weight: 800;">COMPLETADO</span>`
+                                        )
+                                    }
+                                </td>
+                            </tr>
+                            `).join('');
+                        })()}
+                    </tbody>
+                </table>
+            </div>
+        </section>
 
         <section class="card fade-in">
             <h2 style="font-size: 1.1rem; color: var(--primary); margin-bottom: 20px;">Solicitudes por Revisar en ${roleName}</h2>
@@ -440,40 +509,13 @@ const app = {
             </div>
         </section>
 
-        <!-- Seccion de Historial Global (Para todos los administradores) -->
-        <section class="card fade-in" style="margin-top: 32px; border-top: 4px solid var(--secondary);">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h2 style="font-size: 1.1rem; color: var(--primary); font-weight: 800;">🌍 Salidas y Regresos - Nivel Institucional</h2>
-                <span style="font-size: 0.7rem; color: var(--text-muted); font-weight: 700;">(Todos los Empleados)</span>
+        <!-- ACCESO RÁPIDO A MONITOR DE BALANCES -->
+        <section class="card fade-in" style="margin-top: 32px; background: #f0f9ff; border: 1px solid #bae6fd; display: flex; justify-content: space-between; align-items: center; padding: 20px;">
+            <div>
+                <h3 style="margin: 0; color: #0369a1; font-family: 'Outfit', sans-serif;">📉 Monitor de Balances Vacacionales</h3>
+                <p style="margin: 4px 0 0 0; font-size: 0.85rem; color: #0284c7;">Vea el estado institucional de días asignados y consumidos por cada colaborador.</p>
             </div>
-            <div style="overflow-x: auto;">
-                <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
-                    <thead>
-                        <tr style="text-align: left; border-bottom: 2px solid #f1f5f9; color: var(--text-muted);">
-                            <th style="padding: 12px; font-weight: 800;">Empleado</th>
-                            <th style="padding: 12px; font-weight: 800;">Responsable</th>
-                            <th style="padding: 12px; font-weight: 800;">Categoría</th>
-                            <th style="padding: 12px; font-weight: 800;">Sale El Día</th>
-                            <th style="padding: 12px; font-weight: 800;">Regresa El Día</th>
-                            <th style="padding: 12px; text-align: center; font-weight: 800;">Estatus</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${(state.vacationRequests || []).filter(r => r.status === 'approved').map(r => `
-                            <tr style="border-bottom: 1px solid #f8fafc;">
-                                <td style="padding: 12px; font-weight: 700; color: #1e3a8a;">${r.employeeName}</td>
-                                <td style="padding: 12px; font-size: 0.75rem; color: var(--secondary); font-weight: 700;">${r.supervisor}</td>
-                                <td style="padding: 12px;">${r.category}</td>
-                                <td style="padding: 12px; color: #b91c1c; font-weight: 700;">${r.startDate}</td>
-                                <td style="padding: 12px; color: #15803d; font-weight: 700;">${r.endDate}</td>
-                                <td style="padding: 12px; text-align: center;">
-                                    <span style="background: #dcfce7; color: #166534; padding: 4px 12px; border-radius: 999px; font-size: 0.7rem; font-weight: 700;">AUTORIZADO</span>
-                                </td>
-                            </tr>
-                        `).join('') || '<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 20px;">No hay historial de aprobados aún</td></tr>'}
-                    </tbody>
-                </table>
-            </div>
+            <button class="btn" style="background: #0284c7; color: white; padding: 12px 24px; font-weight: 800;" onclick="app.showBalancesMonitor()">ABRIR MONITOR</button>
         </section>
       `;
     },
@@ -497,26 +539,43 @@ const app = {
             </div>
 
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
-                 <div class="card" style="padding: 20px; border-left: 4px solid #ef4444; background: #fef2f2;">
-                     <p style="font-size: 0.7rem; color: #991b1b; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em;">Filtro Modo Pruebas</p>
-                     <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
-                         <span style="font-size: 1.2rem; font-weight: 800; color: #7f1d1d;">ACTIVO ⚠️</span>
-                         <button class="btn" style="background: #991b1b; color: white; padding: 4px 10px; font-size: 0.65rem;" onclick="app.resetData()">REINICIAR</button>
-                     </div>
-                 </div>
                  <div class="card" style="padding: 20px; border-left: 4px solid #22c55e; background: #f0fdf4;">
+                     <p style="font-size: 0.9rem; color: var(--secondary); font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em;">ADE app</p>
                      <p style="font-size: 0.7rem; color: #166534; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em;">Nube Institucional</p>
                      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
                          <span style="font-size: 1.2rem; font-weight: 800; color: #14532d;">CONECTADA ✅</span>
                          <span style="font-size: 1.5rem;">☁️</span>
                      </div>
                  </div>
-                 <div class="card" style="padding: 20px; border-left: 4px solid var(--secondary); background: #f8fafc;">
-                     <p style="font-size: 0.7rem; color: var(--primary); font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em;">Total Declaraciones</p>
-                     <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
-                         <span style="font-size: 1.8rem; font-weight: 900; color: var(--primary);">${totalConflicts}</span>
-                         <span style="font-size: 1.5rem;">⚖️</span>
+                 <div class="card" style="padding: 20px; border-left: 4px solid #0891b2; background: #ecfeff; position: relative;">
+                     <p style="font-size: 0.7rem; color: #0e7490; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em;">🌍 Salidas y Regresos - Día de Hoy</p>
+                     <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px;">
+                        ${(() => {
+                            const todayStr = new Date().toISOString().split('T')[0];
+                            const outgoing = (state.vacationRequests || []).filter(r => r.status === 'approved' && r.startDate === todayStr);
+                            const incoming = (state.vacationRequests || []).filter(r => r.status === 'approved' && r.endDate === todayStr);
+                            
+                            if (outgoing.length === 0 && incoming.length === 0) {
+                                return `<p style="font-size: 0.75rem; color: #64748b; font-style: italic;">Sin movimientos programados hoy</p>`;
+                            }
+                            
+                            let html = '';
+                            if (outgoing.length > 0) {
+                                html += `<div style="display: flex; align-items: center; gap: 6px;">
+                                    <span class="badge" style="background: #06b6d4; color: white; scale: 0.8;">SALIDA</span>
+                                    <span style="font-size: 0.8rem; font-weight: 700;">${outgoing.length} Persona(s)</span>
+                                </div>`;
+                            }
+                            if (incoming.length > 0) {
+                                html += `<div style="display: flex; align-items: center; gap: 6px;">
+                                    <span class="badge" style="background: #10b981; color: white; scale: 0.8;">REGRESO</span>
+                                    <span style="font-size: 0.8rem; font-weight: 700;">${incoming.length} Persona(s)</span>
+                                </div>`;
+                            }
+                            return html;
+                        })()}
                      </div>
+                     <span style="position: absolute; bottom: 10px; right: 10px; font-size: 1.5rem; opacity: 0.3;">🚀</span>
                  </div>
             </div>
         </header>
@@ -530,9 +589,12 @@ const app = {
                 <button class="btn ${app.currentFilter === 'Fallecimiento' ? 'btn-primary' : ''}" style="height: 40px; border-radius: 20px;" onclick="app.setFilter('Fallecimiento')">🕊️ Luto</button>
                 
                 <div style="margin-left: auto; display: flex; gap: 8px; align-items: center;">
-                    <button class="btn" style="background: #eef2ff; color: #4338ca; font-weight: 800; height: 40px;" onclick="app.downloadAnnualPlansPDF()">⬇️ CONSOLIDADO PLAN</button>
-                    <button class="btn" style="background: #be123c; color: white; border: none; height: 40px; padding: 0 16px; font-weight: 800;" onclick="app.resetConflictDeclarations()">REINICIAR CONFLICTOS</button>
+                    <button class="btn" style="background: #eef2ff; color: #4338ca; font-weight: 800; height: 40px; display: flex; align-items: center; gap: 8px;" onclick="app.showAnnualPlansManager()">
+                        <span class="material-symbols-outlined" style="font-size: 1.2rem;">fact_check</span> CONTROL DE PLANIFICACIÓN ANUAL DE VACACIONES
+                    </button>
+                    <button class="btn" style="background: #0ea5e9; color: white; height: 40px; font-weight: 800;" onclick="app.toggleEmployeeEditor()">👥 GESTIÓN DE PERSONAL</button>
                     <button class="btn" style="background: #1e293b; color: white; height: 40px; font-weight: 800;" onclick="app.togglePositionsEditor()">🛠️ ROLES</button>
+                    <button class="btn" style="background: #334155; color: white; height: 40px; font-weight: 800;" onclick="app.toggleSupervisorsEditor()">⚙️ RESPONSABLES</button>
                 </div>
             </div>
 
@@ -592,12 +654,67 @@ const app = {
             </div>
         </section>
 
+        <!-- CRONO MOVIMIENTOS -->
+        <section class="card fade-in" style="margin-bottom: 32px; background: white; padding: 0; overflow: hidden; border: 1px solid #e2e8f0; border-top: 5px solid #0891b2;">
+            <div style="padding: 24px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.4rem; font-weight: 800; color: #0891b2; margin: 0;">🌍 Control Cronológico de Movimientos</h3>
+                <span class="badge" style="background: #ecfeff; color: #0e7490; font-weight: 800;">PASADOS Y FUTUROS</span>
+            </div>
+            <div style="overflow-x: auto; max-height: 400px;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead style="background: #f8fafc; border-bottom: 2px solid #e2e8f0;">
+                         <tr style="text-align: left;">
+                            <th style="padding: 16px; font-size: 0.75rem; text-transform: uppercase; color: #64748b; font-weight: 800;">Colaborador</th>
+                            <th style="padding: 16px; font-size: 0.75rem; text-transform: uppercase; color: #64748b; font-weight: 800;">Salida</th>
+                            <th style="padding: 16px; font-size: 0.75rem; text-transform: uppercase; color: #64748b; font-weight: 800;">Regreso</th>
+                            <th style="padding: 16px; font-size: 0.75rem; text-transform: uppercase; color: #64748b; font-weight: 800; text-align: center;">Estado</th>
+                            ${(state.user && (state.user.role === 'hr' || (state.user.permissions && state.user.permissions.includes('hr')))) ? '<th style="padding: 16px; font-size: 0.75rem; text-transform: uppercase; color: #64748b; font-weight: 800; text-align: center;">ANULAR</th>' : ''}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${(() => {
+                            const approved = (state.vacationRequests || []).filter(r => r.status === 'approved');
+                            const sorted = approved.sort((a,b) => new Date(a.startDate) - new Date(b.startDate));
+                            const today = new Date().toISOString().split('T')[0];
+                            
+                            const isHR = state.user && (state.user.role === 'hr' || (state.user.permissions && state.user.permissions.includes('hr')));
+
+                            if (sorted.length === 0) return `<tr><td colspan="${isHR ? 5 : 4}" style="text-align:center; padding:32px; color:#64748b;">No hay movimientos aprobados registrados aún.</td></tr>`;
+                            
+                            return sorted.map(r => `
+                            <tr style="border-bottom: 1px solid #f1f5f9;">
+                                <td style="padding: 16px; font-weight: 700; color: var(--primary);">${r.employeeName}</td>
+                                <td style="padding: 16px; font-weight: 800; color: #0891b2;">${r.startDate}</td>
+                                <td style="padding: 16px; font-weight: 800; color: #0d9488;">${r.endDate}</td>
+                                <td style="padding: 16px; text-align: center;">
+                                    ${r.startDate > today ? 
+                                        `<span style="background: #e0f2fe; color: #0369a1; padding: 4px 10px; border-radius: 999px; font-size: 0.65rem; font-weight: 800;">PROGRAMADO</span>` : 
+                                        (r.endDate >= today ? 
+                                            `<span style="background: #f0fdf4; color: #166534; padding: 4px 10px; border-radius: 999px; font-size: 0.65rem; font-weight: 800;">EN CURSO</span>` :
+                                            `<span style="background: #f1f5f9; color: #64748b; padding: 4px 10px; border-radius: 999px; font-size: 0.65rem; font-weight: 800;">COMPLETADO</span>`
+                                        )
+                                    }
+                                </td>
+                                ${isHR ? `
+                                    <td style="padding: 16px; text-align: center;">
+                                        <button class="btn" style="padding: 4px 12px; background: #fee2e2; color: #b91c1c; font-size: 0.7rem; border: 1px solid #fecaca;" onclick="app.anularMovimiento('${r.id}')">ANULAR</button>
+                                    </td>
+                                ` : ''}
+                            </tr>
+                            `).join('');
+                        })()}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
         <section class="card fade-in" style="background: white; border: 1px solid #e2e8f0; border-top: 5px solid var(--primary); padding: 0;">
             <div style="padding: 24px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center;">
                 <h2 style="font-family: 'Outfit', sans-serif; font-size: 1.4rem; font-weight: 800; color: var(--primary);">📊 Libro Maestro de Auditoría</h2>
                 <div style="display: flex; gap: 10px;">
-                    <button class="btn" style="background: ${app.currentAuditYear === new Date().getFullYear() ? 'var(--primary)' : '#f1f5f9'}; color: ${app.currentAuditYear === new Date().getFullYear() ? 'white' : 'var(--primary)'};" onclick="app.setAuditYear(new Date().getFullYear())">Ciclo ${new Date().getFullYear()}</button>
-                    <button class="btn" style="background: #111827; color: white;" onclick="app.syncFullAuditData()">SINCRONIZAR (${app.currentAuditYear})</button>
+                    <button class="btn" style="background: #1e3a8a; color: white; display: flex; align-items: center; gap: 8px; font-weight: 800; padding: 10px 20px;" onclick="app.showAuditHistory()">
+                        <span class="material-symbols-outlined" style="font-size: 1.2rem;">history</span> HISTÓRICO POR CICLO
+                    </button>
                     <button class="btn" style="background: #166534; color: white;" onclick="app.exportAuditPDF(${app.currentAuditYear})">EXPORTAR PDF</button>
                 </div>
             </div>
@@ -614,7 +731,7 @@ const app = {
                         </tr>
                     </thead>
                     <tbody>
-                        ${(state.employeesList || []).map(e => {
+                        ${[...(state.employeesList || [])].sort((a,b) => a.name.localeCompare(b.name)).map(e => {
                             const reqs = (state.vacationRequests || []).filter(r => {
                                 const date = new Date(r.startDate);
                                 return date.getFullYear() == app.currentAuditYear && (r.idEmpleado == e.id || r.userId == e.id);
@@ -685,6 +802,37 @@ const app = {
                 </table>
             </div>
         </section>
+
+        <section class="card fade-in" style="margin-top: 32px; border-top: 4px solid #94a3b8; background: #f8fafc;">
+            <h2 style="font-size: 1.1rem; color: #475569; margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
+                <span class="material-symbols-outlined">delete_sweep</span>
+                Solicitudes Rechazadas / Pruebas (Limpieza Técnica)
+            </h2>
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                    <thead>
+                        <tr style="text-align: left; border-bottom: 2px solid #e2e8f0; color: #64748b;">
+                            <th style="padding: 12px;">Colaborador</th>
+                            <th style="padding: 12px;">Motivo/Tipo</th>
+                            <th style="padding: 12px;">Fecha Registro</th>
+                            <th style="padding: 12px; text-align: center;">Acción Permanente</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${(state.vacationRequests || []).filter(r => r.status === 'rejected').map(r => `
+                            <tr style="border-bottom: 1px solid #e2e8f0;">
+                                <td style="padding: 12px; font-weight: 700; color: #1e293b;">${r.employeeName}</td>
+                                <td style="padding: 12px; color: #64748b;">${r.category}</td>
+                                <td style="padding: 12px; color: #64748b;">${r.startDate}</td>
+                                <td style="padding: 12px; text-align: center;">
+                                    <button class="btn" style="background: white; border: 1px solid #ef4444; color: #ef4444; font-size: 0.7rem;" onclick="app.eliminarRegistro('${r.id}')">PURGAR DEFINITIVAMENTE</button>
+                                </td>
+                            </tr>
+                        `).join('') || '<tr><td colspan="4" style="text-align: center; color: #94a3b8; padding: 20px;">No hay registros rechazados para limpiar.</td></tr>'}
+                    </tbody>
+                </table>
+            </div>
+        </section>
       `;
     },
 
@@ -742,9 +890,9 @@ const app = {
                         <span>Reporte Auditoría Institucional</span>
                         <span class="material-symbols-outlined">print</span>
                     </button>
-                    <button class="btn" style="background: #eef2ff; color: #3730a3; font-weight: 800; height: 50px; justify-content: space-between; padding: 0 20px;" onclick="app.downloadAnnualPlansPDF()">
-                        <span>Consolidado Plan de Vacaciones</span>
-                        <span class="material-symbols-outlined">table_chart</span>
+                    <button class="btn" style="background: #eef2ff; color: #3730a3; font-weight: 800; height: 50px; justify-content: space-between; padding: 0 20px;" onclick="app.showAnnualPlansManager()">
+                        <span>Control de Planificación Anual de Vacaciones</span>
+                        <span class="material-symbols-outlined">fact_check</span>
                     </button>
                     <button class="btn" style="background: #fffbeb; color: #92400e; font-weight: 800; height: 50px; justify-content: space-between; padding: 0 20px; border: 1px solid #fef3c7;" onclick="app.showMissingAnnualPlans()">
                         <span>🔍 Pendientes de Planificar</span>
@@ -793,62 +941,14 @@ const app = {
             </section>
         </div>
 
-        <section class="card fade-in" style="background: white; padding: 0; overflow: hidden; border: 1px solid #e2e8f0; border-top: 5px solid #0284c7;">
-            <div style="padding: 24px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center;">
-                <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.4rem; font-weight: 800; color: #0284c7; margin: 0;">📉 Monitor de Balances Vacacionales</h3>
-                <span class="badge" style="background: #e0f2fe; color: #0369a1; font-weight: 800;">CIERRE PROVISIONAL ${reportYear}</span>
-            </div>
-            <div style="overflow-x: auto; max-height: 500px;">
-                <table style="width: 100%; border-collapse: collapse;">
-                    <thead style="position: sticky; top: 0; background: #f8fafc; z-index: 10; border-bottom: 2px solid #e2e8f0;">
-                         <tr style="text-align: left;">
-                            <th style="padding: 16px; font-size: 0.75rem; text-transform: uppercase; color: #64748b; font-weight: 800;">ID</th>
-                            <th style="padding: 16px; font-size: 0.75rem; text-transform: uppercase; color: #64748b; font-weight: 800;">Colaborador</th>
-                            <th style="padding: 16px; font-size: 0.75rem; text-transform: uppercase; color: #64748b; font-weight: 800; text-align: center;">Asignado</th>
-                            <th style="padding: 16px; font-size: 0.75rem; text-transform: uppercase; color: #64748b; font-weight: 800; text-align: center;">Consumido</th>
-                            <th style="padding: 16px; font-size: 0.75rem; text-transform: uppercase; color: #64748b; font-weight: 800; text-align: center;">Balance</th>
-                            <th style="padding: 16px; font-size: 0.75rem; text-transform: uppercase; color: #64748b; font-weight: 800; text-align: center;">Evangelismo</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${state.employeesList.map(emp => {
-                            const reqs = (state.vacationRequests || []).filter(r => {
-                                const date = new Date(r.startDate + 'T00:00:00');
-                                return date.getFullYear() == reportYear && (r.idEmpleado == emp.id || r.userId == emp.id);
-                            });
-                            const approvedReqs = reqs.filter(r => r.status === 'approved');
-                            const consumed = approvedReqs.reduce((sum, r) => {
-                                let d = parseInt(r.totalDays || r.duration);
-                                if (isNaN(d) || (r.duration && r.duration.toString().includes('Semana'))) {
-                                    const s = new Date(r.startDate + 'T00:00:00');
-                                    const e = new Date(r.endDate + 'T00:00:00');
-                                    d = Math.ceil(Math.abs(e - s) / (1000 * 60 * 60 * 24)) + 1;
-                                }
-                                const h = state.getHolidaysInRange(r.startDate, r.endDate);
-                                const ev = r.evangelismoTaken === true ? 10 : 0;
-                                return sum + Math.max(0, (d - ev) - h);
-                            }, 0);
-                            const allocated = state.getWeeksByServiceYears(emp.years) * 7;
-                            const balance = allocated - consumed;
-                            const hasEvan = reqs.some(r => r.evangelismoTaken === true && r.status === 'approved');
-                            
-                            return `
-                                <tr style="border-bottom: 1px solid #f1f5f9; transition: background 0.2s;">
-                                    <td style="padding: 14px 16px; color: #94a3b8; font-family: monospace; font-weight: 700;">#${emp.id.padStart(2,'0')}</td>
-                                    <td style="padding: 14px 16px; font-weight: 700; color: #1e293b;">${emp.name}</td>
-                                    <td style="padding: 14px 16px; text-align: center; color: #64748b; font-weight: 700;">${allocated}d</td>
-                                    <td style="padding: 14px 16px; text-align: center; color: #0284c7; font-weight: 800;">${consumed}d</td>
-                                    <td style="padding: 14px 16px; text-align: center;">
-                                        <span class="badge" style="background: ${balance < 5 ? '#fee2e2' : '#f0f9ff'}; color: ${balance < 5 ? '#991b1b' : '#0369a1'}; font-weight: 800;">${balance}d</span>
-                                    </td>
-                                    <td style="padding: 14px 16px; text-align: center;">${hasEvan ? '✅' : '---'}</td>
-                                </tr>
-                            `;
-                        }).join('')}
-                    </tbody>
-                </table>
-            </div>
-        </section>
+        <div style="margin-top: 32px; display: flex; gap: 16px;">
+            <button class="btn" style="flex: 1; background: #0284c7; color: white; padding: 16px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 10px;" onclick="app.showBalancesMonitor()">
+                <span class="material-symbols-outlined">analytics</span> VER MONITOR DE BALANCES INSTITUCIONAL
+            </button>
+            <button class="btn" style="flex: 1; background: #4338ca; color: white; padding: 16px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 10px;" onclick="app.showAnnualPlansManager()">
+                <span class="material-symbols-outlined">fact_check</span> CONTROL DE PLANIFICACIÓN ANUAL DE VACACIONES
+            </button>
+        </div>
 
         <section class="card fade-in" style="margin-top: 32px; border-top: 4px solid #be185d;">
              <h2 style="font-family: 'Outfit', sans-serif; font-size: 1.2rem; font-weight: 800; color: #9d174d; margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
@@ -880,6 +980,53 @@ const app = {
                 </table>
             </div>
         </section>
+
+        <!-- CRONO MOVIMIENTOS (ASISTENTE RRHH) -->
+        <section class="card fade-in" style="margin-top: 32px; background: white; padding: 0; overflow: hidden; border: 1px solid #e2e8f0; border-top: 5px solid #0891b2;">
+            <div style="padding: 24px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.4rem; font-weight: 800; color: #0891b2; margin: 0;">🌍 Control Institucional de Movimientos</h3>
+                <span class="badge" style="background: #ecfeff; color: #0e7490; font-weight: 800;">CRONOGRAMA DE SALIDAS</span>
+            </div>
+            <div style="overflow-x: auto; max-height: 400px;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                    <thead style="background: #f8fafc; border-bottom: 2px solid #e2e8f0;">
+                         <tr style="text-align: left;">
+                            <th style="padding: 16px; font-weight: 800; color: #64748b;">Colaborador</th>
+                            <th style="padding: 16px; font-weight: 800; color: #64748b;">Salida</th>
+                            <th style="padding: 16px; font-weight: 800; color: #64748b;">Regreso</th>
+                            <th style="padding: 16px; font-weight: 800; color: #64748b; text-align: center;">Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${(() => {
+                            const approved = (state.vacationRequests || []).filter(r => r.status === 'approved');
+                            const sorted = approved.sort((a,b) => new Date(a.startDate) - new Date(b.startDate));
+                            const today = new Date().toISOString().split('T')[0];
+                            
+                            if (sorted.length === 0) return '<tr><td colspan="4" style="text-align:center; padding:32px; color:#64748b;">No hay movimientos aprobados registrados aún.</td></tr>';
+                            
+                            return sorted.map(r => `
+                            <tr style="border-bottom: 1px solid #f1f5f9;">
+                                <td style="padding: 16px; font-weight: 700; color: #1e3a8a;">${r.employeeName}</td>
+                                <td style="padding: 16px; font-weight: 800; color: #0891b2;">${r.startDate}</td>
+                                <td style="padding: 16px; font-weight: 800; color: #0d9488;">${r.endDate}</td>
+                                <td style="padding: 16px; text-align: center;">
+                                    ${r.startDate > today ? 
+                                        `<span style="background: #e0f2fe; color: #0369a1; padding: 4px 10px; border-radius: 999px; font-size: 0.65rem; font-weight: 800;">PROGRAMADO</span>` : 
+                                        (r.endDate >= today ? 
+                                            `<span style="background: #f0fdf4; color: #166534; padding: 4px 10px; border-radius: 999px; font-size: 0.65rem; font-weight: 800;">EN CURSO</span>` :
+                                            `<span style="background: #f1f5f9; color: #64748b; padding: 4px 10px; border-radius: 999px; font-size: 0.65rem; font-weight: 800;">COMPLETADO</span>`
+                                        )
+                                    }
+                                </td>
+                            </tr>
+                            `).join('');
+                        })()}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
       `;
     },
     
@@ -924,7 +1071,7 @@ const app = {
                     <input type="date" id="start_date" onchange="app.calculateDuration()" required style="width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px;">
                 </div>
                 <div>
-                    <label style="display: block; font-size: 0.8rem; font-weight: 700; margin-bottom: 8px;">Fecha de Reincorporación</label>
+                    <label style="display: block; font-size: 0.8rem; font-weight: 700; margin-bottom: 8px;">Fecha de Finalización</label>
                     <input type="date" id="end_date" onchange="app.calculateDuration()" required style="width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px;">
                 </div>
                 <div>
@@ -935,9 +1082,9 @@ const app = {
                 <div>
                     <label style="display: block; font-size: 0.8rem; font-weight: 700; margin-bottom: 8px;">Tipo de Permiso / Licencia</label>
                     <select id="vac_type" onchange="app.updateFormType()" style="width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px;">
-                        <option value="Local">Vacaciones Locales (en Semanas)</option>
-                        <option value="Internacional">Permiso de Salida Internacional</option>
-                        <option value="Conjunta">Vacaciones Conjunta (Nac/Intl)</option>
+                        <option value="Local">Vacaciones Locales</option>
+                        <option value="Internacional">Vacaciones Internacionales</option>
+                        <option value="Conjunta">Vacaciones Conjunta (Nacionales e Internacionales)</option>
                         <option value="Casamiento">Licencia por Casamiento (5 días)</option>
                         <option value="Fallecimiento">Licencia por Fallecimiento (3 días)</option>
                         <option value="Médica">Licencia Médica (Cargar comprobante)</option>
@@ -1007,7 +1154,7 @@ const app = {
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <div>
                         <h3 style="color: #4338ca; margin-bottom: 5px;">Colaborador: ${state.user.name}</h3>
-                        <p style="font-size: 0.85rem; color: #3730a3; margin: 0; font-weight: 700;">Asignación Reglamentaria: ${remainingWeeks} Semana(s) / <span id="ap_total_budget">${remainingWeeks * 7}</span> Días</p>
+                        <p style="font-size: 0.85rem; color: #3730a3; margin: 0; font-weight: 700;">Asignación Reglamentaria: ${remainingWeeks * 7} Días</p>
                     </div>
                 </div>
                 
@@ -1152,6 +1299,18 @@ const app = {
   },
   
   init: async function() {
+    // Atrapamos el prompt de instalación PWA
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        this.deferredPrompt = e;
+        if (this.activeView === 'login') this.render();
+    });
+
+    // Registro del Service Worker para PWA (Instalación en Android/iOS)
+    // Registro del Service Worker para PWA (Instalación en Android/iOS)
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js').catch(e => console.error(e));
+    }
     await state.init();
     
     // 1. Verificar si hay sesión activa para auto-login
@@ -1395,7 +1554,18 @@ const app = {
     }
   },
 
-  sendEmailSimulation: function(to, data) {
+  installPWA: async function() {
+    if (!this.deferredPrompt) return;
+    this.deferredPrompt.prompt();
+    const { outcome } = await this.deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+        console.log('User accepted the PWA install');
+    }
+    this.deferredPrompt = null;
+    this.render();
+  },
+
+  sendInstitutionalEmail: function(to, data) {
     const roleParam = to.includes('gdpaulino') ? 'Presidencia' : (to.includes('prjunior') ? 'Secretaría' : (to.includes('leidymartinez') ? 'Tesorería' : (to.includes('dominicanaeste') ? 'RRHH' : 'employee')));
     const deepLink = `${location.origin}${location.pathname}?role=${roleParam}`;
 
@@ -1474,7 +1644,7 @@ const app = {
       
       if (role === 'manager') {
           // Notificar a RRHH
-          this.sendEmailSimulation(this.supervisorEmails['RRHH'], {
+          this.sendInstitutionalEmail(this.supervisorEmails['RRHH'], {
               employeeName: req.employeeName,
               email: req.email,
               period: `${req.startDate} a ${req.endDate}`,
@@ -1488,7 +1658,7 @@ const app = {
           this.showToast(`✅ Visto Bueno enviado a RRHH`);
       } else {
           // Notificar al Empleado (ÉXITO)
-          this.sendEmailSimulation(req.email, {
+          this.sendInstitutionalEmail(req.email, {
               employeeName: req.employeeName,
               email: req.email,
               period: `${req.startDate} a ${req.endDate}`,
@@ -1520,7 +1690,7 @@ const app = {
         const req = state.vacationRequests.find(r => r.id === id);
         
         // Notificar al Empleado (RECHAZO)
-        this.sendEmailSimulation(req.email, {
+        this.sendInstitutionalEmail(req.email, {
             employeeName: req.employeeName,
             email: req.email,
             period: `${req.startDate} a ${req.endDate}`,
@@ -1789,7 +1959,8 @@ const app = {
       this.showToast("🚀 Enviando solicitud...");
       await state.addRequest(newReq);
       
-      this.sendEmailSimulation(this.supervisorEmails[supervisor], {
+      // Notificación al Supervisor
+      this.sendInstitutionalEmail(this.supervisorEmails[supervisor], {
           employeeName: state.user.name,
           email: email,
           period: `${start} a ${end}`,
@@ -1799,6 +1970,19 @@ const app = {
           statusColor: "#1e293b",
           messageBody: `Se ha recibido una nueva solicitud de ${state.user.name} para su aprobación institucional.`,
           buttonText: "Revisar y Firmar"
+      });
+
+      // CONFIRMACIÓN AL EMPLEADO (SOLICITANTE)
+      this.sendInstitutionalEmail(email, {
+          employeeName: state.user.name,
+          email: email,
+          period: `${start} a ${end}`,
+          category: type,
+          supervisor: supervisor,
+          statusTitle: "CONFIRMACIÓN DE SOLICITUD - ADE",
+          statusColor: "#0284c7",
+          messageBody: `Hola ${state.user.name}, hemos recibido tu solicitud de ${type}. Actualmente se encuentra en revisión por tu responsable directo (${supervisor}).`,
+          buttonText: "Ver Estado de Solicitud"
       });
 
       this.navigate('dashboard');
@@ -1919,7 +2103,7 @@ const app = {
         
         if (pdfUrl) {
             console.log("Submit Phase: 4. Finalizing Metadata");
-            await state.db.collection('conflict_declarations').doc(docId).update({ pdfUrl: pdfUrl });
+            await state.updateConflicto(docId, { pdfUrl: pdfUrl });
         }
         
         // Redirección e Información
@@ -1929,7 +2113,7 @@ const app = {
         
         // Notificación en segundo plano (no bloquea navegación final)
         if (data.email) {
-            this.sendEmailSimulation(data.email, {
+            this.sendInstitutionalEmail(data.email, {
                 employeeName: data.employeeName,
                 email: data.email,
                 period: data.year,
@@ -1954,9 +2138,130 @@ const app = {
   },
 
   togglePositionsEditor: function() {
-      const editor = document.getElementById('positions_editor');
-      if (editor) editor.style.display = (editor.style.display === 'none' ? 'block' : 'none');
+    let modal = document.getElementById('positions_editor_modal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'positions_editor_modal';
+      modal.style.position = 'fixed';
+      modal.style.inset = '0';
+      modal.style.background = 'rgba(0,0,0,0.6)';
+      modal.style.zIndex = '50000';
+      modal.style.display = 'flex';
+      modal.style.alignItems = 'center';
+      modal.style.justifyContent = 'center';
+      modal.style.backdropFilter = 'blur(4px)';
+      document.body.appendChild(modal);
+    } else {
+      if (modal.style.display === 'flex') {
+        modal.style.display = 'none';
+        return;
+      }
+    }
+
+    let positionsHtml = (state.positionsList || []).map((pos, idx) => `
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
+            <span style="font-weight: 700; color: var(--primary);">${pos}</span>
+            <button class="btn" style="background: #fee2e2; color: #b91c1c; padding: 6px 12px; font-size: 0.75rem;" onclick="app.removePosition('${pos.replace(/'/g, "\\'")}')">Eliminar</button>
+        </div>
+    `).join('');
+
+    let html = `
+      <div class="card fade-in glass" style="width: 500px; max-width: 90%; background: white; border-radius: 16px; padding: 32px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); max-height: 90vh; display: flex; flex-direction: column;">
+        <h2 style="font-size: 1.5rem; color: var(--primary); margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+          <span class="material-symbols-outlined">work</span> Catálogo de Roles/Posiciones
+        </h2>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 24px;">Administre las posiciones o cargos que los empleados pueden tener dentro de la institución.</p>
+        
+        <div style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px;" id="positions_list_container">
+            ${positionsHtml}
+        </div>
+
+        <div style="display: flex; gap: 12px; justify-content: space-between;">
+            <button class="btn" onclick="app.addPosition()" style="background: #10b981; color: white; font-weight: 700; flex: 1;">+ Añadir Cargo</button>
+            <button class="btn" onclick="document.getElementById('positions_editor_modal').style.display='none'" style="background: #f1f5f9; color: #475569; font-weight: 700; flex: 1;">Cerrar</button>
+        </div>
+      </div>
+    `;
+    modal.innerHTML = html;
+    modal.style.display = 'flex';
   },
+
+  toggleSupervisorsEditor: function() {
+    let modal = document.getElementById('supervisors_editor_modal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'supervisors_editor_modal';
+      modal.style.position = 'fixed';
+      modal.style.inset = '0';
+      modal.style.background = 'rgba(0,0,0,0.6)';
+      modal.style.zIndex = '50000';
+      modal.style.display = 'flex';
+      modal.style.alignItems = 'center';
+      modal.style.justifyContent = 'center';
+      modal.style.backdropFilter = 'blur(4px)';
+      document.body.appendChild(modal);
+    } else {
+      if (modal.style.display === 'flex') {
+        modal.style.display = 'none';
+        return;
+      }
+    }
+
+    let html = `
+      <div class="card fade-in glass" style="width: 500px; max-width: 90%; background: white; border-radius: 16px; padding: 32px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto;">
+        <h2 style="font-size: 1.5rem; color: var(--primary); margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+          <span class="material-symbols-outlined">manage_accounts</span> Configurar Responsables
+        </h2>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 24px;">Modifique los correos y nombres de los responsables departamentales que autorizan las solicitudes y de Recursos Humanos.</p>
+        
+        <div style="display: flex; flex-direction: column; gap: 16px; margin-bottom: 24px;">
+    `;
+
+    for (const [dept, data] of Object.entries(state.supervisors || {})) {
+        html += `
+          <div style="background: #f8fafc; padding: 16px; border-radius: 12px; border: 1px solid #e2e8f0;">
+             <h3 style="font-size: 1rem; color: #0f172a; margin-bottom: 12px;">Departamento: ${dept}</h3>
+             <div style="display: flex; flex-direction: column; gap: 12px;">
+                <div>
+                   <label style="display: block; font-size: 0.75rem; font-weight: 700; color: #64748b; margin-bottom: 4px;">Nombre del Responsable</label>
+                   <input type="text" id="sup_name_${dept}" value="${data.name}" style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none; font-family: inherit;">
+                </div>
+                <div>
+                   <label style="display: block; font-size: 0.75rem; font-weight: 700; color: #64748b; margin-bottom: 4px;">Correo Institucional</label>
+                   <input type="email" id="sup_email_${dept}" value="${data.email}" style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none; font-family: inherit;">
+                </div>
+             </div>
+          </div>
+        `;
+    }
+
+    html += `
+        </div>
+        <div style="display: flex; gap: 12px; justify-content: flex-end;">
+            <button class="btn" onclick="document.getElementById('supervisors_editor_modal').style.display='none'" style="background: #f1f5f9; color: #475569; font-weight: 700;">Cancelar</button>
+            <button class="btn" id="btn_save_supervisors" onclick="app.saveSupervisorsConfig()" style="background: var(--primary); color: white; font-weight: 700;">Guardar Cambios</button>
+        </div>
+      </div>
+    `;
+    modal.innerHTML = html;
+    modal.style.display = 'flex';
+  },
+
+  saveSupervisorsConfig: async function() {
+    const btn = document.getElementById('btn_save_supervisors');
+    if (btn) { btn.disabled = true; btn.innerText = "Guardando..."; }
+    let newSups = JSON.parse(JSON.stringify(state.supervisors));
+    for (const dept of Object.keys(newSups)) {
+       const nameInput = document.getElementById('sup_name_' + dept);
+       const emailInput = document.getElementById('sup_email_' + dept);
+       if (nameInput) newSups[dept].name = nameInput.value.trim();
+       if (emailInput) newSups[dept].email = emailInput.value.trim();
+    }
+    await state.updateSupervisors(newSups);
+    document.getElementById('supervisors_editor_modal').style.display = 'none';
+    app.render();
+  },
+
 
   addPosition: async function() {
       const p = prompt("Nombre de la posición:");
@@ -2136,103 +2441,96 @@ const app = {
     if (!window.jspdf) return null;
     const doc = new jspdf.jsPDF('p', 'mm', 'a4');
     
-    // Header Institucional - Azul Corporativo
-    doc.setFontSize(22); doc.setTextColor(30, 58, 138); // Blue 800
+    // Header Institucional - ADE Branding
+    doc.setFillColor(30, 58, 138); doc.rect(0, 0, 210, 35, 'F');
+    
+    doc.setFontSize(20); doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
-    doc.text("ASOCIACIÓN DOMINICANA DEL ESTE", 45, 25);
+    doc.text("ASOCIACIÓN DOMINICANA DEL ESTE", 105, 12, { align: "center" });
     
-    doc.setFontSize(12); doc.setTextColor(71, 85, 105); // Slate 600
-    doc.setFont("helvetica", "normal");
-    doc.text("Gestión Institucional de Vacaciones y Licencias", 60, 33);
+    doc.setFontSize(14); doc.setFont("helvetica", "normal");
+    doc.text("RECURSOS HUMANOS - VACACIONES EMPLEADOS", 105, 20, { align: "center" });
     
-    doc.setDrawColor(30, 58, 138); doc.setLineWidth(0.8);
-    doc.line(20, 38, 190, 38);
+    doc.setFontSize(10); doc.text("GESTIÓN INSTITUCIONAL DE LICENCIAS Y VACACIONES", 105, 28, { align: "center" });
 
-    // Título y Folio
-    doc.setFontSize(14); doc.setTextColor(15, 23, 42); // Slate 900
-    doc.setFont("helvetica", "bold");
-    doc.text("SOLICITUD DE LICENCIA / VACACIONES", 20, 52);
+    // Título Central
+    doc.setFontSize(14); doc.setTextColor(15, 23, 42); doc.setFont("helvetica", "bold");
+    doc.text("FORMULARIO DE SOLICITUD / ARCHIVO", 105, 52, { align: "center" });
     
-    doc.setFontSize(10); doc.setTextColor(100, 116, 139);
-    doc.setFont("helvetica", "normal");
-    const folio = (req.id || 'N/A').substring(0, 8).toUpperCase();
-    doc.text(`FOLIO: ${folio}`, 190, 52, { align: "right" });
-    
+    doc.setDrawColor(30, 58, 138); doc.setLineWidth(1); doc.line(30, 56, 180, 56);
+
     // Bloque de Datos (Información del Empleado)
     let y = 70;
     const feriados = this.getHolidaysInRange(req.startDate, req.endDate);
     const totalDias = parseInt(req.duration || 0);
     const totalSemanas = Math.ceil((totalDias + feriados) / 7);
 
+    // Panel de Información Estilizado
+    doc.setFillColor(248, 250, 252); doc.rect(20, 65, 170, 110, 'F');
+    doc.setDrawColor(203, 213, 225); doc.rect(20, 65, 170, 110, 'S');
+    
     const info = [
-        ["EMPLEADO:", req.employeeName],
-        ["PIN / ID:", req.idEmpleado || "N/A"],
-        ["TIPO DE LICENCIA:", (req.category || "VACACIONES").toUpperCase()],
-        ["RESPONSABLE:", req.supervisor || "Secretaría"],
+        ["COLABORADOR:", (req.employeeName || "").toUpperCase()],
+        ["DEPARTAMENTO:", req.supervisorDept || req.supervisor || "N/A"],
+        ["TIPO DE PERMISO:", (() => {
+            const cat = req.category || "VACACIONES";
+            if (cat === 'Local') return "VACACIONES LOCALES";
+            if (cat === 'Internacional') return "VACACIONES INTERNACIONALES";
+            if (cat === 'Conjunta') return "VACACIONES CONJUNTA (NACIONALES E INTERNACIONALES)";
+            return cat.toUpperCase();
+        })()],
         ["FECHA SALIDA:", app.formatDateES(req.startDate)],
         ["FECHA REGRESO:", app.formatDateES(req.endDate)],
-        ["DÍAS FERIADOS:", `${feriados} Días Feriados (No afecta Balance)`],
-        ["TOTAL DE SEMANAS:", `${totalSemanas} Semanas (Incluye Feriados y Evangelismo)`],
-        ["EVANGELISMO (10 DÍAS):", req.evangelismoTaken ? "TOMADO (Autorizado por Presidente)" : "DISPONIBLE"],
-        ["SEMANAS PENDIENTES:", `${Math.floor((state.employeesList.find(e => e.id == req.idEmpleado)?.remainingDays || 0) / 7)} Semanas restantes`],
-        ["ESTADO FINAL:", "AUTORIZADO POR EL PRESIDENTE"]
+        ["DÍAS FERIADOS:", `${feriados} Días`],
+        ["TOTAL DÍAS:", `${totalDias} Días`],
+        ["EVANGELISMO (10 D):", req.evangelismoTaken ? "TOMADO (Autorizado)" : "DISPONIBLE"],
+        ["REFERENCIA:", `#${req.id.substring(0,8).toUpperCase()}`],
+        ["ESTADO:", "AUTORIZADO / ARCHIVADO"]
     ];
 
+    y = 75;
     info.forEach(row => {
-        doc.setFont("helvetica", "bold"); doc.setTextColor(30, 41, 59);
+        doc.setFont("helvetica", "bold"); doc.setTextColor(30, 41, 59); doc.setFontSize(10);
         doc.text(row[0], 25, y);
         doc.setFont("helvetica", "normal"); doc.setTextColor(51, 65, 85);
-        doc.text((row[1] || "").toString(), 95, y);
+        doc.text((row[1] || "").toString(), 85, y);
         y += 10;
     });
 
-    // Seccion de Firmas Institucionales
-    y += 20;
-    doc.setFont("helvetica", "bold"); doc.setTextColor(30, 58, 138);
-    doc.text("CUADRO DE AUTORIZACIONES", 20, y);
-    doc.setLineWidth(0.5); doc.line(20, y+2, 190, y+2);
-    
-    y += 15;
-    const sigWidth = 45; const sigHeight = 22;
-    
-    // Función helper para dibujar firma o sello digital
-    const drawSignature = (title, sigData, posX) => {
-        if (sigData && sigData.length > 50) { // Indica que es un Base64 de firma
-            try { doc.addImage(sigData, 'PNG', posX, y, sigWidth, sigHeight); } catch(e) {}
-        } else if (sigData === "SISTEMA_ADE_FICHA" || !sigData) {
-            doc.setFont("helvetica", "italic"); doc.setFontSize(8); doc.setTextColor(148, 163, 184);
-            doc.text("[ VALIDADO POR SISTEMA ]", posX + 5, y + 10);
+    // Firmas
+    const sigY = 220;
+    const sigWidth = 45; const sigHeight = 18;
+
+    // Helper para firmas
+    const drawSig = (title, sigData, posX) => {
+        if (sigData && sigData.length > 50) {
+            try {
+                doc.addImage(sigData, 'PNG', posX, sigY - 20, sigWidth, sigHeight);
+            } catch(e) {}
         }
-        doc.setFont("helvetica", "bold"); doc.setFontSize(9); doc.setTextColor(30, 58, 138);
-        doc.text(title, posX + 5, y + sigHeight + 6);
+        doc.setDrawColor(148, 163, 184); doc.setLineWidth(0.5);
+        doc.line(posX, sigY, posX + sigWidth, sigY);
+        doc.setFontSize(8); doc.setTextColor(100); doc.setFont("helvetica", "bold");
+        doc.text(title, posX + sigWidth/2, sigY + 5, { align: "center" });
     };
 
-    // Obtener firmas desde el objeto o campos directos (compatibilidad con datos reales)
-    const applicantSig = (req.signatures && req.signatures.applicant) || req.applicantSignature;
-    const managerSig = (req.signatures && req.signatures.manager) || req.managerSignature;
-    const hrSig = (req.signatures && req.signatures.hr) || req.hrSignature;
+    drawSig("FIRMA SOLICITANTE", req.signatures?.applicant || req.applicantSignature, 25);
+    drawSig("VISTO BUENO SUPERVISOR", req.signatures?.manager || req.managerSignature, 82);
+    drawSig("AUTORIZACIÓN RRHH", req.signatures?.hr || req.hrSignature, 140);
 
-    drawSignature("Firma Solicitante", applicantSig, 25);
-    drawSignature(`Firma Director (${req.supervisor || 'Ade'})`, managerSig, 85);
-    drawSignature("Firma RRHH (Final)", hrSig, 145);
+    // Footer
+    doc.setFontSize(7); doc.setTextColor(150);
+    doc.text(`Documento generado digitalmente por ADE Vacaciones - Folio ${req.id}`, 105, 280, { align: "center" });
+    doc.text("Asociación Dominicana del Este - Recursos Humanos", 105, 285, { align: "center" });
 
-    // Pie de página
-    doc.setFontSize(8); doc.setTextColor(148, 163, 184);
-    doc.text(`Documento de la Unión Dominicana. Generado el ${new Date().toLocaleString()}`, 50, 285);
-    
-    const fileName = `SOLICITUD_${req.employeeName.replace(/ /g,'_')}_2026.pdf`;
+    // Guardado y Nube
+    const fileName = `Solicitud_${req.employeeName.replace(/\s+/g, '_')}_${new Date(req.startDate).getFullYear()}.pdf`;
     const pdfOutput = doc.output('blob');
     
-    // 💾 ARCHIVO AUTOMÁTICO EN LA NUBE INSTITUCIONAL (Firebase Storage)
+    // Archivar en Firebase
     const yearSub = new Date(req.startDate).getFullYear() || 2026;
     const firePath = `vacaciones/${yearSub}/${req.employeeName}/${fileName}`;
-    
-    state.uploadPDFToCloud(pdfOutput, firePath).then(url => {
-        if (url) {
-            console.log("📄 PDF Oficial sincronizado en la nube:", url);
-            state.db.collection('requests').doc(req.id).update({ cloudPdf: url });
-        }
-    }).catch(err => console.error("Error en nube:", err));
+    state.uploadPDFToCloud(pdfOutput, firePath).catch(err => console.error("Error nube:", err));
 
     doc.save(fileName);
     return URL.createObjectURL(pdfOutput);
@@ -2914,18 +3212,31 @@ const app = {
           alert('Error: Librería PDF no cargada.');
           return;
       }
-      this.showToast('Generando Consolidado de Planificación...', 3000);
+      this.showToast('Generando Consolidado Profesional...', 3000);
       const doc = new jspdf.jsPDF('l', 'mm', 'a4');
+      const currYear = new Date().getFullYear();
       
-      // Auto-Firma de RRHH
+      // -- DISEÑO INSTITUCIONAL SUPERIOR --
+      // Fondo de cabecera azul
+      doc.setFillColor(30, 58, 138); // Blue 800
+      doc.rect(0, 0, 297, 35, 'F');
+      
+      doc.setTextColor(255, 255, 255);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(20);
+      doc.text("ASOCIACIÓN DOMINICANA DEL ESTE", 148, 15, { align: "center" });
+      
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "normal");
+      doc.text("RECURSOS HUMANOS - VACACIONES EMPLEADOS", 148, 22, { align: "center" });
+      
+      doc.setFontSize(10);
+      doc.text(`REGISTRO CONSOLIDADO PARA AUDITORÍA INSTITUCIONAL - CICLO ${currYear}`, 148, 28, { align: "center" });
+      
+      // Auto-Firma de RRHH para el consolidado
       let hrSignature = "";
       const hrReq = (state.vacationRequests || []).find(r => r.signatures && r.signatures.hr);
       if (hrReq) { hrSignature = hrReq.signatures.hr; }
-      
-      doc.setFontSize(18); doc.setTextColor(30, 58, 138); doc.setFont("helvetica", "bold");
-      doc.text("ASOCIACIÓN DOMINICANA DEL ESTE", 90, 20);
-      doc.setFontSize(14); doc.setTextColor(71, 85, 105); doc.setFont("helvetica", "normal");
-      doc.text(`CONSOLIDADO VACACIONES PARA AUDITORÍA ${new Date().getFullYear()}`, 95, 28);
       
       const plans = state.annualPlans || [];
       const tableData = [];
@@ -2935,9 +3246,9 @@ const app = {
               return period.split(' al ').map(d => app.formatDateES(d)).join(' al ');
           }).join('\n');
           tableData.push([
-              p.employeeName,
-              p.supervisorDept || p.supervisor || 'N/A',
-              p.assignedWeeks + " Semanas",
+              p.employeeName.toUpperCase(),
+              p.supervisorDept || p.supervisor || 'ADMINISTRACIÓN',
+              p.assignedWeeks * 7 + " Días",
               blocks,
               p.signatures ? p.signatures.applicant : '',
               hrSignature
@@ -2949,38 +3260,136 @@ const app = {
       }
 
       doc.autoTable({
-          startY: 40,
-          head: [['Nombre del Colaborador', 'Responsable', 'Asignación', 'Fechas Escogidas', 'Firma Colaborador', 'Firma Director RRHH']],
+          startY: 45,
+          head: [['COLABORADOR', 'RESPONSABLE', 'DÍAS', 'PERIODOS ADJUDICADOS', 'FIRMA EMPLEADO', 'VISTO BUENO RRHH']],
           body: tableData,
           theme: 'grid',
-          styles: { fontSize: 8, cellPadding: 4, valign: 'middle' },
-          headStyles: { fillColor: [30, 58, 138], textColor: 255, halign: 'center' },
+          styles: { 
+              fontSize: 8, 
+              cellPadding: 4, 
+              valign: 'middle',
+              lineColor: [200, 200, 200],
+              lineWidth: 0.1,
+              font: "helvetica"
+          },
+          headStyles: { 
+              fillColor: [30, 58, 138], 
+              textColor: 255, 
+              halign: 'center', 
+              fontStyle: 'bold',
+              cellPadding: 5
+          },
           columnStyles: {
-              0: { cellWidth: 45 },
+              0: { cellWidth: 50, fontStyle: 'bold' },
               1: { cellWidth: 35, halign: 'center' },
               2: { cellWidth: 25, halign: 'center' },
-              3: { cellWidth: 55 },
-              4: { cellWidth: 55, halign: 'center', minCellHeight: 20 },
-              5: { cellWidth: 55, halign: 'center', minCellHeight: 20 }
+              3: { cellWidth: 60 },
+              4: { cellWidth: 50, halign: 'center', minCellHeight: 25 },
+              5: { cellWidth: 50, halign: 'center', minCellHeight: 25 }
           },
           didDrawCell: function(data) {
               if (data.section === 'body' && data.cell.raw && data.cell.raw.length > 100) {
                   if (data.column.index === 4 || data.column.index === 5) {
                       try {
-                          doc.addImage(data.cell.raw, 'PNG', data.cell.x + 5, data.cell.y + 2, 45, 15);
+                          const x = data.cell.x + (data.cell.width - 35) / 2;
+                          const y = data.cell.y + (data.cell.height - 15) / 2;
+                          doc.addImage(data.cell.raw, 'PNG', x, y, 35, 15);
                       } catch(e) {}
                   }
               }
           },
           willDrawCell: function(data) {
               if (data.section === 'body' && (data.column.index === 4 || data.column.index === 5)) {
-                  data.cell.text = ''; // Clear text so base64 string doesn't print
+                  data.cell.text = '';
               }
           },
-          margin: { top: 40, left: 10, right: 10 }
+          margin: { top: 45, left: 10, right: 10 }
       });
 
-      doc.save(`Planificacion_Anual_${new Date().getFullYear()}.pdf`);
+      // Pie de página
+      const pageCount = doc.internal.getNumberOfPages();
+      for(let i = 1; i <= pageCount; i++) {
+          doc.setPage(i);
+          doc.setFontSize(8);
+          doc.setTextColor(100);
+          doc.text(`Hoja ${i} de ${pageCount} - Generado por ADE Vacaciones v2.5`, 20, 200);
+      }
+
+      doc.save(`Consolidado_Vacaciones_ADE_${currYear}.pdf`);
+      
+      // DESCARGA INDIVIDUAL OPCIONAL (Solo si el navegador lo permite en bloque)
+      if (confirm("¿Desea descargar también las planificaciones individuales de cada empleado?")) {
+        this.showToast("Generando archivos individuales...");
+        plans.forEach((p, idx) => {
+            setTimeout(async () => {
+                const individualId = p.id;
+                this.generateAnnualPlanPDF(p);
+            }, idx * 1000);
+        });
+      }
+  },
+
+  generateAnnualPlanPDF: async function(plan) {
+    if (!window.jspdf) return;
+    const doc = new jspdf.jsPDF('p', 'mm', 'a4');
+    const currYear = new Date().getFullYear();
+
+    // -- CABECERA INSTITUCIONAL --
+    doc.setFillColor(30, 58, 138); doc.rect(0, 0, 210, 30, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold"); doc.setFontSize(16);
+    doc.text("ASOCIACIÓN DOMINICANA DEL ESTE", 105, 12, { align: "center" });
+    doc.setFontSize(12); doc.setFont("helvetica", "normal");
+    doc.text("RECURSOS HUMANOS - VACACIONES EMPLEADOS", 105, 18, { align: "center" });
+    doc.setFontSize(9); doc.text(`FICHA DE PLANIFICACIÓN ANUAL DE VACACIONES - CICLO ${currYear}`, 105, 24, { align: "center" });
+
+    // -- DATOS DEL EMPLEADO --
+    doc.setFillColor(248, 250, 252); doc.rect(15, 40, 180, 25, 'F');
+    doc.setDrawColor(226, 232, 240); doc.rect(15, 40, 180, 25, 'S');
+    
+    doc.setTextColor(30, 58, 138); doc.setFontSize(11); doc.setFont("helvetica", "bold");
+    doc.text("DATOS DEL COLABORADOR", 20, 48);
+    
+    doc.setTextColor(15, 23, 42); doc.setFontSize(10); doc.setFont("helvetica", "normal");
+    doc.text(`Nombre: ${plan.employeeName.toUpperCase()}`, 20, 56);
+    doc.text(`Departamento: ${plan.supervisorDept || plan.supervisor || 'General'}`, 20, 61);
+
+    // -- TABLA DE PERIODOS --
+    doc.setTextColor(30, 58, 138); doc.setFont("helvetica", "bold");
+    doc.text("PERIODOS PLANIFICADOS", 15, 78);
+    
+    const tableData = (plan.periods || []).map((p, i) => [`Periodo 0${i+1}`, p]);
+    doc.autoTable({
+        startY: 82,
+        head: [['IDENTIFICADOR', 'RANGO DE FECHAS SELECCIONADAS']],
+        body: tableData,
+        theme: 'striped',
+        headStyles: { fillColor: [30, 58, 138], textColor: 255 },
+        styles: { cellPadding: 5, fontSize: 10 },
+        margin: { left: 15, right: 15 }
+    });
+
+    let finalY = doc.autoTable.previous.finalY + 30;
+
+    // -- ÁREA DE FIRMAS --
+    if (plan.signatures && plan.signatures.applicant) {
+        doc.addImage(plan.signatures.applicant, 'PNG', 40, finalY - 20, 45, 18);
+    }
+    doc.setDrawColor(148, 163, 184); doc.line(30, finalY, 100, finalY);
+    doc.setFontSize(9); doc.setTextColor(100); doc.text("FIRMA DEL COLABORADOR", 40, finalY + 5);
+
+    // Firma RRHH (Si existe algún registro aprobado)
+    const hrReq = (state.vacationRequests || []).find(r => r.signatures && r.signatures.hr);
+    if (hrReq) {
+        doc.addImage(hrReq.signatures.hr, 'PNG', 125, finalY - 20, 45, 18);
+    }
+    doc.line(115, finalY, 185, finalY);
+    doc.text("VISTO BUENO RRHH", 130, finalY + 5);
+
+    // Footer
+    doc.setFontSize(7); doc.text(`Certificado emitido digitalmente el ${new Date().toLocaleDateString()} - Portal ADE`, 105, 285, { align: "center" });
+
+    doc.save(`Plan_${plan.employeeName.replace(/ /g,'_')}.pdf`);
   },
 
   showMissingAnnualPlans: function() {
@@ -3121,5 +3530,500 @@ const app = {
       });
 
       doc.save(`Consolidado_Conflicto_Interes_${currYear}.pdf`);
+  },
+
+  showBalancesMonitor: function() {
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay fade-in';
+    modal.style.cssText = `position: fixed; inset: 0; background: rgba(15, 23, 42, 0.85); z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(8px);`;
+    
+    const currentYear = new Date().getFullYear();
+    
+    modal.innerHTML = `
+        <div class="card" style="width: 100%; max-width: 1000px; max-height: 90vh; overflow: hidden; display: flex; flex-direction: column; padding: 0; border: none; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);">
+            <div style="padding: 24px; background: #0284c7; color: white; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h2 style="margin: 0; font-family: 'Outfit', sans-serif; font-size: 1.5rem; font-weight: 800;">📉 Monitor de Balances Vacacionales</h2>
+                    <p style="margin: 4px 0 0 0; font-size: 0.8rem; opacity: 0.9;">Control Institucional de Presupuesto - Ciclo ${currentYear}</p>
+                </div>
+                <button onclick="this.closest('.modal-overlay').remove()" style="background: rgba(255,255,255,0.2); border: none; color: white; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-weight: bold; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">&times;</button>
+            </div>
+            
+            <div style="overflow-y: auto; padding: 0;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead style="position: sticky; top: 0; background: #f8fafc; z-index: 10; border-bottom: 2px solid #e2e8f0; text-align: left;">
+                         <tr>
+                            <th style="padding: 16px; font-size: 0.7rem; text-transform: uppercase; color: #64748b; font-weight: 800;">ID</th>
+                            <th style="padding: 16px; font-size: 0.7rem; text-transform: uppercase; color: #64748b; font-weight: 800;">Colaborador</th>
+                            <th style="padding: 16px; font-size: 0.7rem; text-transform: uppercase; color: #64748b; font-weight: 800; text-align: center;">Asignado</th>
+                            <th style="padding: 16px; font-size: 0.7rem; text-transform: uppercase; color: #64748b; font-weight: 800; text-align: center;">Consumido</th>
+                            <th style="padding: 16px; font-size: 0.7rem; text-transform: uppercase; color: #64748b; font-weight: 800; text-align: center;">Balance</th>
+                            <th style="padding: 16px; font-size: 0.7rem; text-transform: uppercase; color: #64748b; font-weight: 800; text-align: center;">Evangelismo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${[...state.employeesList].sort((a,b) => a.name.localeCompare(b.name)).map(emp => {
+                            const reqs = (state.vacationRequests || []).filter(r => {
+                                const date = new Date(r.startDate + 'T00:00:00');
+                                return date.getFullYear() == currentYear && (r.idEmpleado == emp.id || r.userId == emp.id);
+                            });
+                            const approvedReqs = reqs.filter(r => r.status === 'approved');
+                            const consumed = approvedReqs.reduce((sum, r) => {
+                                let d = parseInt(r.totalDays || r.duration);
+                                if (isNaN(d) || (r.duration && r.duration.toString().includes('Semana'))) {
+                                    const s = new Date(r.startDate + 'T00:00:00');
+                                    const e = new Date(r.endDate + 'T00:00:00');
+                                    d = Math.ceil(Math.abs(e - s) / (1000 * 60 * 60 * 24)) + 1;
+                                }
+                                const h = state.getHolidaysInRange(r.startDate, r.endDate);
+                                const ev = r.evangelismoTaken === true ? 10 : 0;
+                                return sum + Math.max(0, (d - ev) - h);
+                            }, 0);
+                            const allocated = state.getWeeksByServiceYears(emp.years) * 7;
+                            const balance = allocated - consumed;
+                            const hasEvan = reqs.some(r => r.evangelismoTaken === true && r.status === 'approved');
+                            
+                            return `
+                                <tr style="border-bottom: 1px solid #f1f5f9; transition: background 0.2s;">
+                                    <td style="padding: 12px 16px; color: #94a3b8; font-family: monospace; font-weight: 700;">#${emp.id.padStart(2,'0')}</td>
+                                    <td style="padding: 12px 16px; font-weight: 700; color: #1e293b; font-size: 0.85rem;">${emp.name}</td>
+                                    <td style="padding: 12px 16px; text-align: center; color: #64748b; font-weight: 700;">${allocated}d</td>
+                                    <td style="padding: 12px 16px; text-align: center; color: #0284c7; font-weight: 800;">${consumed}d</td>
+                                    <td style="padding: 12px 16px; text-align: center;">
+                                        <span class="badge" style="background: ${balance < 5 ? '#fee2e2' : '#f0f9ff'}; color: ${balance < 5 ? '#991b1b' : '#0369a1'}; font-weight: 800;">${balance}d</span>
+                                    </td>
+                                    <td style="padding: 12px 16px; text-align: center;">${hasEvan ? '✅' : '---'}</td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            </div>
+            
+            <div style="padding: 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end;">
+                <button class="btn" style="background: #1e293b; color: white;" onclick="this.closest('.modal-overlay').remove()">ENTENDIDO</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+  },
+
+  showAnnualPlansManager: function() {
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay fade-in';
+    modal.style.cssText = `position: fixed; inset: 0; background: rgba(15, 23, 42, 0.9); z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(12px);`;
+    
+    const plans = state.annualPlans || [];
+    const totalEmps = state.employeesList.length;
+    const submitted = plans.length;
+    
+    modal.innerHTML = `
+        <div class="card" style="width: 100%; max-width: 1100px; max-height: 90vh; overflow: hidden; display: flex; flex-direction: column; padding: 0; border: none; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.6); border-radius: 20px;">
+            <div style="padding: 24px; background: #4338ca; color: white; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h2 style="margin: 0; font-family: 'Outfit', sans-serif; font-size: 1.6rem; font-weight: 800;">📅 Monitor Institucional de Planificación Anual</h2>
+                    <p style="margin: 4px 0 0 0; font-size: 0.85rem; opacity: 0.9;">Gestión de Registros y Descargas Consolidadas - Ciclo ${new Date().getFullYear()}</p>
+                </div>
+                <div style="display: flex; gap: 12px; align-items: center;">
+                    <div style="background: rgba(255,255,255,0.1); padding: 8px 16px; border-radius: 12px; font-size: 0.9rem; font-weight: 700;">
+                        ${submitted} / ${totalEmps} Colaboradores han completado su plan
+                    </div>
+                    <button onclick="this.closest('.modal-overlay').remove()" style="background: rgba(255,255,255,0.2); border: none; color: white; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-weight: bold; font-size: 1.4rem;">&times;</button>
+                </div>
+            </div>
+            
+            <div style="padding: 20px; background: #f8fafc; display: flex; gap: 12px; border-bottom: 1px solid #e2e8f0;">
+                <button class="btn" style="background: #0284c7; color: white; padding: 12px 20px; font-weight: 800; display: flex; align-items: center; gap: 8px;" onclick="app.downloadAllIndividualPlans()">
+                    <span class="material-symbols-outlined">file_download</span> DESCARGAR TODOS LOS INDIVIDUALES (LOTE)
+                </button>
+            </div>
+            
+            <div style="overflow-y: auto; padding: 0; flex-grow: 1;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                    <thead style="position: sticky; top: 0; background: #f1f5f9; z-index: 10; border-bottom: 2px solid #cbd5e1; text-align: left;">
+                         <tr>
+                            <th style="padding: 18px; font-weight: 800; color: #475569;">COLABORADOR</th>
+                            <th style="padding: 18px; font-weight: 800; color: #475569;">DEPARTAMENTO / RESPONSABLE</th>
+                            <th style="padding: 18px; font-weight: 800; color: #475569; text-align: center;">DÍAS</th>
+                            <th style="padding: 18px; font-weight: 800; color: #475569; text-align: center;">ARCHIVO</th>
+                            ${(state.user.role === 'hr' || (state.user.permissions && state.user.permissions.includes('hr'))) ? '<th style="padding: 18px; font-weight: 800; color: #475569; text-align: center;">ANULAR</th>' : ''}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${plans.sort((a,b) => a.employeeName.localeCompare(b.employeeName)).map(p => `
+                            <tr style="border-bottom: 1px solid #f1f5f9; hover: background: #f8fafc;">
+                                <td style="padding: 14px 18px;">
+                                    <div style="font-weight: 800; color: #1e293b;">${p.employeeName.toUpperCase()}</div>
+                                    <div style="font-size: 0.75rem; color: #64748b;">Enviado: ${p.createdAt ? new Date(p.createdAt.seconds * 1000).toLocaleDateString() : 'N/A'}</div>
+                                </td>
+                                <td style="padding: 14px 18px; color: #475569;">${p.supervisorDept || p.supervisor || 'ADMINISTRACIÓN'}</td>
+                                <td style="padding: 14px 18px; text-align: center;">
+                                    <span class="badge" style="background: #ecfdf5; color: #065f46; font-weight: 800;">${p.assignedWeeks * 7} Días</span>
+                                </td>
+                                <td style="padding: 14px 18px; text-align: center;">
+                                    <button class="btn" style="padding: 6px 12px; background: #f1f5f9; color: #1e293b; font-size: 0.75rem; border: 1px solid #e2e8f0;" onclick="app.downloadIndividualPlanPDFById('${p.id}')">
+                                        📄 PDF
+                                    </button>
+                                </td>
+                                ${(state.user.role === 'hr' || (state.user.permissions && state.user.permissions.includes('hr'))) ? `
+                                <td style="padding: 14px 18px; text-align: center;">
+                                    <button class="btn" style="padding: 6px 12px; background: #fee2e2; color: #991b1b; font-size: 0.75rem; border: 1px solid #fecaca;" onclick="app.deleteAnnualPlan('${p.id}')">
+                                        🗑️ ANULAR
+                                    </button>
+                                </td>
+                                ` : ''}
+                            </tr>
+                        `).join('') || `<tr><td colspan="5" style="text-align: center; padding: 40px; color: #64748b; font-style: italic;">No hay registros de planificación para mostrar aún.</td></tr>`}
+                    </tbody>
+                </table>
+            </div>
+            
+            <div style="padding: 24px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end;">
+                <button class="btn" style="background: #1e293b; color: white; padding: 12px 30px;" onclick="this.closest('.modal-overlay').remove()">CERRAR PANEL</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+  },
+
+  downloadIndividualPlanPDFById: function(planId) {
+      const plan = (state.annualPlans || []).find(p => p.id === planId);
+      if (plan) this.generateAnnualPlanPDF(plan);
+  },
+
+  downloadAllIndividualPlans: function() {
+      const plans = state.annualPlans || [];
+      if (plans.length === 0) return alert("No hay registros para descargar.");
+      
+      this.showToast(`Preparando descarga de ${plans.length} archivos...`);
+      plans.forEach((p, i) => {
+          setTimeout(() => {
+              this.generateAnnualPlanPDF(p);
+          }, i * 1000); // 1s de delay para no bloquear descargas
+      });
+  },
+
+  deleteAnnualPlan: async function(planId) {
+      if (!confirm("⚠️ ¿Está seguro de que desea ANULAR este registro de planificación? Esta acción no se puede deshacer.")) return;
+      
+      try {
+          this.showToast("Anulando registro...");
+          await state.db.collection('annualPlans').doc(planId).delete();
+          // Update local state
+          state.annualPlans = state.annualPlans.filter(p => p.id !== planId);
+          // Refresh UI
+          const modal = document.querySelector('.modal-overlay');
+          if (modal) {
+              modal.remove();
+              this.showAnnualPlansManager();
+          }
+          this.showToast("Planificación anulada con éxito.");
+      } catch (err) {
+          console.error("Error al anular:", err);
+          alert("Error al intentar anular el registro.");
+      }
+   },
+
+   anularMovimiento: async function(id) {
+       if (!confirm("⚠️ ¿Desea ANULAR esta solicitud aprobada? Esto devolverá los días al balance del empleado y eliminará el movimiento. Según el Código de Trabajo, esto aplica por enfermedad o posposición justificada.")) return;
+       
+       try {
+           this.showToast("Anulando movimiento y restituyendo días...");
+           await state.annulVacationRequest(id);
+           this.showToast("Movimiento anulado y balance actualizado.");
+           this.navigate('hr');
+       } catch (err) {
+           console.error("Error al anular:", err);
+           alert("No se pudo anular el movimiento.");
+       }
+   },
+
+   showAuditHistory: function() {
+       const cycles = (state.auditCycles || []).sort((a,b) => b.year - a.year);
+       
+       const modal = document.createElement('div');
+       modal.className = 'modal-overlay fade-in';
+       modal.innerHTML = `
+           <div class="modal-card" style="max-width: 600px;">
+               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                   <h2 style="margin: 0; color: var(--primary); font-weight: 800; display: flex; align-items: center; gap: 10px;">
+                       <span class="material-symbols-outlined">auto_stories</span> Histórico de Ciclos Institucionales
+                   </h2>
+                   <button class="btn-icon" onclick="this.closest('.modal-overlay').remove()">close</button>
+               </div>
+               
+               <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px;">Acceda a los reportes consolidados y archivos maestros de años anteriores almacenados en la nube.</p>
+               
+               <div style="display: flex; flex-direction: column; gap: 12px; max-height: 400px; overflow-y: auto; padding-right: 8px;">
+                   ${cycles.map(c => `
+                       <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 16px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center;">
+                           <div>
+                               <div style="font-weight: 800; color: var(--primary); font-size: 1.1rem;">CICLO ${c.year}</div>
+                               <div style="font-size: 0.75rem; color: #64748b;">Archivado el: ${c.archivedAt ? new Date(c.archivedAt.seconds * 1000).toLocaleDateString() : 'N/A'}</div>
+                           </div>
+                           <button class="btn" style="background: var(--primary); color: white; border: none; padding: 8px 16px; font-weight: 800;" onclick="window.open('${c.url}', '_blank')">
+                               <span class="material-symbols-outlined" style="font-size: 1.1rem;">cloud_download</span> DESCARGAR
+                           </button>
+                       </div>
+                   `).join('') || '<div style="text-align:center; padding: 40px; color: #94a3b8; font-style: italic;">No hay ciclos archivados todavía.</div>'}
+               </div>
+               
+               <div style="margin-top: 30px; padding-top: 20px; border-top: 2px dashed #e2e8f0;">
+                   <button class="btn" style="width: 100%; background: #166534; color: white; padding: 14px; border: none; font-weight: 800;" onclick="app.archiveCurrentCycleUI()">
+                       <span class="material-symbols-outlined" style="font-size: 1.2rem;">inventory_2</span> CERRAR Y ARCHIVAR CICLO ACTUAL (${new Date().getFullYear()})
+                   </button>
+                   <p style="font-size: 0.7rem; color: #ef4444; margin-top: 8px; text-align: center; font-weight: 700;">⚠️ Esta acción genera una copia permanente del estado actual en la nube.</p>
+               </div>
+           </div>
+       `;
+       document.body.appendChild(modal);
+   },
+
+   archiveCurrentCycleUI: async function() {
+       const year = new Date().getFullYear();
+       if (!confirm(`¿Está seguro de que desea cerrar formalmente el ciclo ${year} y guardar una copia de auditoría en la nube?`)) return;
+       
+       try {
+           this.showToast("Generando reporte maestro y subiendo a la nube...");
+           // Nota: En una implementación completa, aquí usaríamos jspdf para generar el PDF consolidado real
+           // Por ahora, simulamos el proceso de archivado para que la interfaz funcione.
+           // Generamos un PDF básico del estado actual
+           const doc = new jspdf.jsPDF('p', 'mm', 'a4');
+           doc.text(`AUDITORÍA CONSOLIDADA ADE - CICLO ${year}`, 105, 20, { align: "center" });
+           doc.text(`Generado el: ${new Date().toLocaleString()}`, 105, 30, { align: "center" });
+           
+           const pdfBlob = doc.output('blob');
+           const path = `audits/consolidated_${year}_${Date.now()}.pdf`;
+           const url = await state.uploadPDFToCloud(pdfBlob, path);
+           
+           if (url) {
+               await state.archiveCycle(year, url);
+               this.showToast("¡Ciclo archivado correctamente!");
+               const modal = document.querySelector('.modal-overlay');
+               if (modal) modal.remove();
+               this.showAuditHistory();
+           }
+       } catch (err) {
+           console.error("Error al archivar:", err);
+           alert("Error al intentar archivar el ciclo.");
+       }
+   },
+ 
+   eliminarRegistro: async function(id) {
+    if (confirm("⚠️ ¿Está seguro que desea ELIMINAR PERMANENTEMENTE este registro? Esta acción no se puede deshacer y el registro desaparecerá de todos los controles.")) {
+        try {
+            this.showToast("🧹 Limpiando registro...");
+            await state.deleteRequest(id);
+            this.render();
+            this.showToast("✅ Registro eliminado con éxito");
+        } catch (e) {
+            console.error(e);
+            alert("Error al eliminar: " + e.message);
+        }
+    }
+  },
+
+  // 👥 MÓDULO DE GESTIÓN DE PERSONAL
+  toggleEmployeeEditor: function() {
+    const existing = document.getElementById('employee-manager-modal');
+    if (existing) {
+        existing.remove();
+        return;
+    }
+    this.renderEmployeeEditor();
+  },
+
+  renderEmployeeEditor: function() {
+    const modal = document.createElement('div');
+    modal.id = 'employee-manager-modal';
+    modal.className = 'modal-overlay fade-in';
+    modal.style = "position: fixed; inset: 0; background: rgba(15, 23, 42, 0.8); z-index: 15000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(8px); padding: 20px;";
+    
+    const employees = [...(state.employeesList || [])].sort((a,b) => a.name.localeCompare(b.name));
+    
+    modal.innerHTML = `
+        <div class="card glass shadow-2xl" style="width: 100%; max-width: 900px; max-height: 90vh; overflow-y: auto; background: white !important; border-radius: 24px; padding: 0; border: 1px solid rgba(255,255,255,0.2);">
+            <div style="position: sticky; top: 0; background: white; padding: 32px; border-bottom: 2px solid #f1f5f9; z-index: 10; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                   <h2 style="font-family: 'Outfit', sans-serif; font-size: 1.8rem; font-weight: 800; color: var(--primary); margin: 0;">Gestión de Personal Ministerial</h2>
+                   <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 4px;">Añada, edite o retire oficiales de la base de datos institucional.</p>
+                </div>
+                <button class="btn" onclick="app.toggleEmployeeEditor()" style="background: #f1f5f9; color: #1e293b; border-radius: 50%; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; padding: 0;">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <div style="padding: 32px;">
+                <!-- Formulario Nuevo/Editar -->
+                <div id="emp-form-container" class="card" style="background: #f8fafc; border: 2px solid #e2e8f0; margin-bottom: 32px; padding: 24px;">
+                    <h3 id="form-title" style="font-weight: 800; color: var(--primary); margin-bottom: 20px; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.05em;">➕ Registrar Nuevo Empleado</h3>
+                    <input type="hidden" id="edit-emp-id" value="">
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+                        <div>
+                            <label style="display: block; font-size: 0.75rem; font-weight: 800; color: var(--primary); margin-bottom: 8px;">Nombre Completo</label>
+                            <input type="text" id="emp-name" placeholder="Ej: Juan Pérez" style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.9rem;">
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.75rem; font-weight: 800; color: var(--primary); margin-bottom: 8px;">PIN de Acceso (4 dígitos)</label>
+                            <input type="text" id="emp-pin" maxlength="4" placeholder="1234" style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.9rem; font-family: monospace; letter-spacing: 0.2em;">
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.75rem; font-weight: 800; color: var(--primary); margin-bottom: 8px;">Categoría/Departamento</label>
+                            <select id="emp-cat" style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.9rem;">
+                                <option value="Presidencia">Presidencia</option>
+                                <option value="Secretaría">Secretaría</option>
+                                <option value="Tesorería">Tesorería</option>
+                                <option value="RRHH">RRHH</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.75rem; font-weight: 800; color: var(--primary); margin-bottom: 8px;">Cargo Actual</label>
+                            <select id="emp-position" style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.9rem;">
+                                ${state.positionsList.map(p => `<option value="${p}">${p}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.75rem; font-weight: 800; color: var(--primary); margin-bottom: 8px;">Años de Servicio (UD)</label>
+                            <input type="number" id="emp-years" value="0" style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.9rem;">
+                        </div>
+                        <div style="display: flex; align-items: flex-end;">
+                            <button id="btn-save-emp" class="btn btn-primary" style="width: 100%; height: 48px; font-weight: 800;" onclick="app.saveEmployeeUI()">GUARDAR CAMBIOS</button>
+                        </div>
+                    </div>
+                    <button id="btn-cancel-edit" style="display: none; margin-top: 12px; background: transparent; border: none; color: #64748b; font-size: 0.8rem; cursor: pointer; text-decoration: underline;" onclick="app.cancelEmployeeEdit()">Cancelar edición y limpiar</button>
+                </div>
+
+                <!-- Tabla de Empleados -->
+                <div class="table-container shadow-sm" style="border-radius: 12px; border: 1px solid #e2e8f0;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead style="background: #f8fafc;">
+                            <tr>
+                                <th style="padding: 16px; text-align: left; font-size: 0.75rem; font-weight: 800; color: var(--primary);">ID</th>
+                                <th style="padding: 16px; text-align: left; font-size: 0.75rem; font-weight: 800; color: var(--primary);">NOMBRE</th>
+                                <th style="padding: 16px; text-align: left; font-size: 0.75rem; font-weight: 800; color: var(--primary);">PIN</th>
+                                <th style="padding: 16px; text-align: left; font-size: 0.75rem; font-weight: 800; color: var(--primary);">DEPTO</th>
+                                <th style="padding: 16px; text-align: left; font-size: 0.75rem; font-weight: 800; color: var(--primary);">AÑOS</th>
+                                <th style="padding: 16px; text-align: right; font-size: 0.75rem; font-weight: 800; color: var(--primary);">ACCIONES</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${employees.map(e => `
+                                <tr style="border-bottom: 1px solid #f1f5f9;">
+                                    <td style="padding: 14px 16px; font-weight: 700; color: #64748b; font-size: 0.8rem;">#${e.id}</td>
+                                    <td style="padding: 14px 16px;">
+                                        <div style="font-weight: 700; color: var(--primary); font-size: 0.9rem;">${e.name}</div>
+                                        <div style="font-size: 0.7rem; color: var(--text-muted);">${e.position}</div>
+                                    </td>
+                                    <td style="padding: 14px 16px; font-family: monospace; font-weight: 700; color: #0891b2; letter-spacing: 0.1em;">${e.pin}</td>
+                                    <td style="padding: 14px 16px;"><span class="badge" style="background: #e0f2fe; color: #0369a1; font-size: 0.7rem;">${e.cat}</span></td>
+                                    <td style="padding: 14px 16px; font-weight: 700;">${e.years}</td>
+                                    <td style="padding: 14px 16px; text-align: right;">
+                                        <button class="btn" style="padding: 6px; background: transparent; color: var(--primary);" onclick="app.editEmployeeUI('${e.id}')">
+                                            <span class="material-symbols-outlined" style="font-size: 1.2rem;">edit_note</span>
+                                        </button>
+                                        <button class="btn" style="padding: 6px; background: transparent; color: #ef4444;" onclick="app.deleteEmployeeUI('${e.id}')">
+                                            <span class="material-symbols-outlined" style="font-size: 1.2rem;">person_remove</span>
+                                        </button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+  },
+
+  editEmployeeUI: function(id) {
+    const emp = state.employeesList.find(e => e.id == id);
+    if (!emp) return;
+    
+    document.getElementById('form-title').innerText = "✏️ Editando Empleado: " + emp.name;
+    document.getElementById('edit-emp-id').value = emp.id;
+    document.getElementById('emp-name').value = emp.name;
+    document.getElementById('emp-pin').value = emp.pin;
+    document.getElementById('emp-cat').value = emp.cat;
+    document.getElementById('emp-position').value = emp.position;
+    document.getElementById('emp-years').value = emp.years;
+    document.getElementById('btn-save-emp').innerText = "ACTUALIZAR DATOS";
+    document.getElementById('btn-cancel-edit').style.display = "block";
+    document.getElementById('emp-form-container').style.background = "#fffbeb";
+    document.getElementById('emp-form-container').style.borderColor = "#fcd34d";
+    document.getElementById('emp-name').focus();
+  },
+
+  cancelEmployeeEdit: function() {
+    document.getElementById('form-title').innerText = "➕ Registrar Nuevo Empleado";
+    document.getElementById('edit-emp-id').value = "";
+    document.getElementById('emp-name').value = "";
+    document.getElementById('emp-pin').value = "";
+    document.getElementById('emp-years').value = "0";
+    document.getElementById('btn-save-emp').innerText = "GUARDAR CAMBIOS";
+    document.getElementById('btn-cancel-edit').style.display = "none";
+    document.getElementById('emp-form-container').style.background = "#f8fafc";
+    document.getElementById('emp-form-container').style.borderColor = "#e2e8f0";
+  },
+
+  saveEmployeeUI: async function() {
+    const id = document.getElementById('edit-emp-id').value;
+    const name = document.getElementById('emp-name').value.trim();
+    const pin = document.getElementById('emp-pin').value.trim();
+    const cat = document.getElementById('emp-cat').value;
+    const pos = document.getElementById('emp-position').value;
+    const years = parseInt(document.getElementById('emp-years').value) || 0;
+
+    if (!name || pin.length < 4) {
+        alert("⚠️ Por favor complete el Nombre y un PIN de 4 dígitos.");
+        return;
+    }
+
+    try {
+        this.showToast("🚀 Sincronizando con la nube de ADE...");
+        await state.saveEmployee({
+            id: id || null,
+            name: name,
+            pin: pin,
+            cat: cat,
+            position: pos,
+            years: years
+        });
+        this.showToast("✅ ¡Datos institucionalizados con éxito!");
+        this.cancelEmployeeEdit();
+        // El onSnapshot de Firestore en state.js se encargará de refrescar la lista y el UI
+        setTimeout(() => {
+            const modal = document.getElementById('employee-manager-modal');
+            if (modal) {
+                modal.remove();
+                this.renderEmployeeEditor(); // Re-render table within the modal
+            }
+        }, 800);
+    } catch (e) {
+        console.error(e);
+        alert("Fallo al guardar: " + e.message);
+    }
+  },
+
+  deleteEmployeeUI: async function(id) {
+    if (!confirm("🚨 ¿Está seguro que desea ELIMINAR a este oficial? No podrá volver a ingresar al sistema y sus saldos se perderán.")) return;
+    try {
+        this.showToast("🗑️ Eliminando de la nube...");
+        await state.deleteEmployee(id);
+        this.showToast("¡Empleado removido!");
+        setTimeout(() => {
+            const modal = document.getElementById('employee-manager-modal');
+            if (modal) {
+                modal.remove();
+                this.renderEmployeeEditor(); 
+            }
+        }, 800);
+    } catch (e) {
+        console.error(e);
+        alert("Error al eliminar");
+    }
   }
 };

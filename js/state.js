@@ -34,12 +34,26 @@ const state = {
     "Miembro de Junta", "Asistente de Comunicación"
   ],
   usersCache: {},// --- DATOS INSTITUCIONALES (Cargados desde Excel) ---
-  employeesList: [{"id": "1", "name": "MARCOS ANTONIO ARIAS MERCEDES", "years": 0, "position": "Pastor", "cat": "Presidencia", "pin": "2137"}, {"id": "2", "name": "ISMAEL  ASTACIO CHIRENO", "years": 7, "position": "Pastor", "cat": "Presidencia", "pin": "2274"}, {"id": "3", "name": "RAQUEL GIOVANNA BASTARDO MATEO", "years": 34, "position": "Equipo de Finanzas", "cat": "Tesorer\u00eda", "pin": "2411"}, {"id": "4", "name": "OLIVER RAFIEL BERAS CALDERON", "years": 13, "position": "Departamental", "cat": "Presidencia", "pin": "2548"}, {"id": "5", "name": "JOE  CALDERON", "years": 24, "position": "Pastor", "cat": "Presidencia", "pin": "2685"}, {"id": "6", "name": "NIRSON  CASTILLO FELIZ", "years": 5, "position": "Pastor", "cat": "Presidencia", "pin": "2822"}, {"id": "7", "name": "GABRIEL  CEDE\u00d1O", "years": 26, "position": "Pastor", "cat": "Presidencia", "pin": "2959"}, {"id": "8", "name": "LEONIDAS FRANCISCO CHIRENO CONTRERAS", "years": 27, "position": "Pastor", "cat": "Presidencia", "pin": "3096"}, {"id": "9", "name": "GERMAN  DANIEL SENA", "years": 2, "position": "Pastor", "cat": "Presidencia", "pin": "3233"}, {"id": "10", "name": "MIGUEL IGNACIO DE JESUS PASCUAL", "years": 2, "position": "Pastor", "cat": "Presidencia", "pin": "3370"}, {"id": "11", "name": "SANDY  DE LA CRUZ SEVERINO", "years": 5, "position": "Pastor", "cat": "Presidencia", "pin": "3507"}, {"id": "12", "name": "DAVID  DE LOS SANTOS DE OLEO", "years": 8, "position": "Pastor", "cat": "Presidencia", "pin": "3644"}, {"id": "13", "name": "DAVID JOEL DEL ROSARIO MATEO", "years": 8, "position": "Pastor", "cat": "Presidencia", "pin": "3781"}, {"id": "14", "name": "CANDELARIO  DEL VILLAR GONZALEZ", "years": 11, "position": "Equipo de Finanzas", "cat": "Tesorer\u00eda", "pin": "3918"}, {"id": "15", "name": "FRANCISCO  DIAZ HERRERA", "years": 6, "position": "Pastor", "cat": "Presidencia", "pin": "4055"}, {"id": "16", "name": "JUAN CARLOS ENCARNACION", "years": 28, "position": "Pastor", "cat": "Presidencia", "pin": "4192"}, {"id": "17", "name": "JUNIOR ANDRES FELIZ FELIZ", "years": 18, "position": "SECRETARIO EJECUTIVO", "cat": "Presidencia", "pin": "1717"}, {"id": "18", "name": "AGUSTIN ANTONIO FERNANDEZ", "years": 5, "position": "Personal de Oficina", "cat": "Secretar\u00eda", "pin": "4466"}, {"id": "19", "name": "RONALD MANUEL FIGUEROA RODRIGUEZ", "years": 1, "position": "Pastor", "cat": "Presidencia", "pin": "4603"}, {"id": "20", "name": "PIERRESON  FRANCOIS", "years": 11, "position": "Pastor", "cat": "Presidencia", "pin": "4740"}, {"id": "21", "name": "JOSE ARMANDO GARCIA LIZARDO", "years": 5, "position": "Pastor", "cat": "Presidencia", "pin": "4877"}, {"id": "22", "name": "JULIO  GOMEZ ALBOLEDA", "years": 30, "position": "Pastor", "cat": "Presidencia", "pin": "5014"}, {"id": "23", "name": "ANA MERCEDES ALTAGRACIA GONZALEZ ROBIU", "years": 37, "position": "Departamental", "cat": "Presidencia", "pin": "2323"}, {"id": "24", "name": "EUCLIDES  GRABRIEL CASTRO", "years": 13, "position": "Pastor", "cat": "Presidencia", "pin": "5288"}, {"id": "25", "name": "MANUEL CONCEPCION GUERRERO", "years": 31, "position": "Personal de Oficina", "cat": "Secretar\u00eda", "pin": "5425"}, {"id": "26", "name": "OSCAR EDUARDO GUILLERMO RODRIGUEZ", "years": 6, "position": "Pastor", "cat": "Presidencia", "pin": "5562"}, {"id": "27", "name": "NURIS ISABEL HENRIQUEZ CALDERON", "years": 27, "position": "Equipo de Finanzas", "cat": "Tesorer\u00eda", "pin": "5699"}, {"id": "28", "name": "VICTOR MANUEL HENRIQUEZ CALDERON", "years": 25, "position": "Pastor", "cat": "Presidencia", "pin": "5836"}, {"id": "29", "name": "JOSE FRANCISCO JACOB FRECI", "years": 19, "position": "Pastor", "cat": "Presidencia", "pin": "5973"}, {"id": "30", "name": "RAMON ERNESTO JAVIER GONZALEZ", "years": 5, "position": "Pastor", "cat": "Presidencia", "pin": "6110"}, {"id": "31", "name": "JORGE EUGENIO JESUS JIMENEZ", "years": 13, "position": "Pastor", "cat": "Presidencia", "pin": "6247"}, {"id": "32", "name": "ABIGAIL  LADOO PELEGRIN", "years": 3, "position": "Equipo de Finanzas", "cat": "Tesorer\u00eda", "pin": "6384"}, {"id": "33", "name": "SANTIAGO  LAGUER", "years": 14, "position": "Pastor", "cat": "Presidencia", "pin": "6521"}, {"id": "34", "name": "GARIBALDI  LORENZO LUNA", "years": 20, "position": "Equipo de Finanzas", "cat": "Tesorer\u00eda", "pin": "6658"}, {"id": "35", "name": "LEIDY MARGARITA MARTINEZ RAMIREZ", "years": 26, "position": "Tesorera", "cat": "Tesorer\u00eda", "pin": "3535"}, {"id": "36", "name": "JESUS  MATEO CIPION", "years": 14, "position": "Pastor", "cat": "Presidencia", "pin": "6932"}, {"id": "37", "name": "JORGE DAVID MATEO MEJIA", "years": 14, "position": "Departamental", "cat": "Presidencia", "pin": "7069"}, {"id": "38", "name": "INGRID ANYELINA MEJIA POUERIET", "years": 12, "position": "Personal de Oficina", "cat": "Secretar\u00eda", "pin": "7206"}, {"id": "39", "name": "FREDDY ANTONIO MIGUEL JUAN", "years": 12, "position": "Departamental", "cat": "Presidencia", "pin": "7343"}, {"id": "40", "name": "JUAN FRANCISCO MORILLO MAZARA", "years": 26, "position": "Pastor", "cat": "Presidencia", "pin": "4040"}, {"id": "41", "name": "FAUSTO SEBASTIAN PAULINO FUENTES", "years": 2, "position": "Pastor", "cat": "Presidencia", "pin": "7617"}, {"id": "42", "name": "GEURIS DENCIL PAULINO MILANES", "years": 26, "position": "Presidente", "cat": "Presidencia", "pin": "4242"}, {"id": "43", "name": "ELEIN  PAULINO SAINT FLEUR", "years": 2, "position": "Personal de Oficina", "cat": "Secretar\u00eda", "pin": "7891"}, {"id": "44", "name": "MANUEL  PIO NOLASCO", "years": 14, "position": "Pastor", "cat": "Presidencia", "pin": "8028"}, {"id": "45", "name": "DINORA  REYES", "years": 21, "position": "Personal de Oficina", "cat": "Secretar\u00eda", "pin": "8165"}, {"id": "46", "name": "HENRY AMAURY ROA FELIZ", "years": 26, "position": "Pastor", "cat": "Presidencia", "pin": "8302"}, {"id": "47", "name": "LUIS ALBERTO RODRIGUEZ BASTARDO", "years": 18, "position": "Departamental", "cat": "Presidencia", "pin": "8439"}, {"id": "48", "name": "FAUSTO  RODRIGUEZ GONZALEZ", "years": 22, "position": "Pastor", "cat": "Presidencia", "pin": "8576"}, {"id": "49", "name": "FERNANDO  ROSA ESPINAL", "years": 6, "position": "Pastor", "cat": "Presidencia", "pin": "8713"}, {"id": "50", "name": "JEANNEMARIE  SAINT-FLEUR", "years": 22, "position": "Departamental", "cat": "Presidencia", "pin": "8850"}, {"id": "51", "name": "DORIAN XAVIER SANTANA SANTANA", "years": 15, "position": "Pastor", "cat": "Presidencia", "pin": "8987"}, {"id": "52", "name": "JUAN ONASIS SANTANA SANTOS", "years": 8, "position": "Pastor", "cat": "Presidencia", "pin": "9124"}, {"id": "53", "name": "RAFAEL  SANTILLAN", "years": 26, "position": "Pastor", "cat": "Presidencia", "pin": "9261"}, {"id": "54", "name": "SADO  SIMO TEJEDA", "years": 1, "position": "Pastor", "cat": "Presidencia", "pin": "9398"}, {"id": "55", "name": "YUNIOR  SOLANO", "years": 0, "position": "Personal de Oficina", "cat": "Secretar\u00eda", "pin": "9535"}, {"id": "56", "name": "ANGEL FRANCISCO SOSA BERROA", "years": 32, "position": "Pastor", "cat": "Presidencia", "pin": "9672"}, {"id": "57", "name": "GREGORIO  TIBURCIO DE LOS SANTOS", "years": 34, "position": "Pastor", "cat": "Presidencia", "pin": "9809"}, {"id": "58", "name": "ALEX  VAN SAINT PHAT", "years": 4, "position": "Pastor", "cat": "Presidencia", "pin": "9946"}, {"id": "59", "name": "MISAEL  VIZCAINO PADILLA", "years": 16, "position": "Pastor", "cat": "Presidencia", "pin": "1083"}, {"id": "60", "name": "JAVIER  ZORRILLA MEDINA", "years": 9, "position": "Pastor", "cat": "Presidencia", "pin": "1220"}],
+  employeesList: [],
 
   async init() {
     console.log("🛠️ Inicializando Estado ADE...");
     this.user = null; // Forza login siempre
     this.saveSession(); // Limpia rastros
+    
+    // 🚀 NUEVO: Migración a Firebase dinámica
+    if (this.db) {
+        try {
+            const snap = await this.db.collection('employees').get();
+            this.employeesList = [];
+            snap.forEach(doc => {
+                this.employeesList.push({ id: doc.id, ...doc.data() });
+            });
+            console.log(`☁️ Dinámico: Cargados ${this.employeesList.length} empleados desde Firestore.`);
+        } catch(e) {
+            console.error("Error en nube:", e);
+        }
+    }
     // No se carga la sesión automáticamente para forzar el login.
     // Si hay usuario y base de datos, hacer una sincronización silenciosa para refrescar la foto u otros cambios
     if (this.user && this.db) { // This condition will now always be false due to `this.user = null`
@@ -281,13 +295,15 @@ const state = {
         const empIndex = this.employeesList.findIndex(e => e.id == doc.id);
         if (empIndex !== -1) {
           Object.assign(this.employeesList[empIndex], data);
-          
-          // Sincronización crucial si somos nosotros
-          if (this.user && this.user.id == doc.id) {
-            this.user.photo = data.photo || this.user.photo;
-            this.user.remainingDays = data.remainingDays !== undefined ? data.remainingDays : this.user.remainingDays;
-            this.saveSession();
-          }
+        } else {
+          this.employeesList.push({ id: doc.id, ...data });
+        }
+
+        // Sincronización crucial si somos nosotros
+        if (this.user && this.user.id == doc.id) {
+          this.user.photo = data.photo || this.user.photo;
+          this.user.remainingDays = data.remainingDays !== undefined ? data.remainingDays : this.user.remainingDays;
+          this.saveSession();
         }
       });
       console.log("👥 Datos de empleados sincronizados de la nube");
@@ -318,6 +334,18 @@ const state = {
             app.render();
         }
     });
+
+    // Escuchar Supervisores
+    this.db.collection('settings').doc('supervisors').onSnapshot(doc => {
+        if (doc.exists) {
+            this.supervisors = doc.data().list || this.supervisors;
+        } else {
+            this.db.collection('settings').doc('supervisors').set({ list: this.supervisors });
+        }
+        if (typeof app !== 'undefined') {
+            app.render();
+        }
+    });
   },
 
   calculateWeeks(years) {
@@ -337,6 +365,13 @@ const state = {
     
     if (role === 'manager') {
         updates.status = 'pending_hr';
+        // Enviar correo a RRHH para que revisen
+        const hrEmail = (this.supervisors && this.supervisors['RRHH'] && this.supervisors['RRHH'].email) ? this.supervisors['RRHH'].email : 'dominicanaeste@gmail.com';
+        this.sendEmailNotification(
+            hrEmail,
+            `NUEVA SOLICITUD PENDIENTE: ${req.employeeName}`,
+            `La solicitud de ${req.employeeName} para el periodo ${req.startDate} al ${req.endDate} ha recibido el visto bueno de su administrador inmediato. Requiere su revisión final en Recursos Humanos.`
+        );
     } else if (role === 'hr') {
         updates.status = 'approved';
         // Descontar días de la cuenta del oficial si es aprobación final de RRHH
@@ -373,10 +408,11 @@ const state = {
         }
         
         // Notificar por correo (Requerimiento Asistente RRHH)
+        const hrEmail = (this.supervisors && this.supervisors['RRHH'] && this.supervisors['RRHH'].email) ? this.supervisors['RRHH'].email : 'dominicanaeste@gmail.com';
         this.sendEmailNotification(
-            'dominicanaeste@gmail.com',
+            hrEmail,
             `SOLICITUD AUTORIZADA: ${req.employeeName}`,
-            `La solicitud de ${req.employeeName} para el periodo ${req.startDate} al ${req.endDate} ha sido autorizada digitalmente por todos los responsables.`
+            `La solicitud de ${req.employeeName} para el periodo ${req.startDate} al ${req.endDate} ha sido autorizada digitalmente por todos los responsables y RRHH.`
         );
     }
     
@@ -384,11 +420,114 @@ const state = {
     await this.loadRequests(); // Recargar datos
   },
 
-  async rejectRequest(requestId) {
-    await this.db.collection("requests").doc(requestId).update({
-      status: 'rejected',
-      rejectedAt: firebase.firestore.FieldValue.serverTimestamp()
+   async rejectRequest(requestId) {
+     await this.db.collection("requests").doc(requestId).update({
+       status: 'rejected',
+       rejectedAt: firebase.firestore.FieldValue.serverTimestamp()
+     });
+     await this.loadRequests();
+   },
+ 
+   async deleteRequest(requestId) {
+     if (!this.db) return;
+     await this.db.collection("requests").doc(requestId).delete();
+     await this.loadRequests();
+   },
+
+  annualPlans: [],
+  auditCycles: [],
+  
+  async loadRequests() {
+    if (!this.db) return;
+    try {
+        const snap = await this.db.collection('requests').get();
+        this.vacationRequests = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch(e) { console.warn("loadRequests - error loading requests:", e); }
+    
+    try {
+        const plansSnap = await this.db.collection('annual_plans').get();
+        this.annualPlans = plansSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch(e) { console.warn("loadRequests - error loading plans:", e); }
+
+    try {
+        const archiveSnap = await this.db.collection('audit_cycles').get();
+        this.auditCycles = archiveSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch(e) { console.warn("loadRequests - error loading audit_cycles:", e); }
+  },
+
+  async archiveCycle(year, pdfUrl) {
+    if (!this.db) return;
+    await this.db.collection('audit_cycles').add({
+        year: year,
+        url: pdfUrl,
+        archivedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        archivedBy: this.user ? this.user.name : 'System'
     });
+    await this.loadRequests();
+  },
+
+  async annulVacationRequest(id) {
+    if (!this.db) return;
+    const docRef = this.db.collection('requests').doc(id);
+    const doc = await docRef.get();
+    if (!doc.exists) throw new Error("Documento no existe");
+    const req = doc.data();
+
+    // Solo restauramos días si la solicitud estaba aprobada/finalizada
+    if (req.status === 'approved') {
+        const eId = req.employeeId || req.userId || req.idEmpleado;
+        const empRef = this.db.collection('employees').doc(eId);
+        const empDoc = await empRef.get();
+        
+        if (empDoc.exists) {
+            const currentDays = empDoc.data().remainingDays || 0;
+            let requestedTotal = parseInt(req.totalDays || req.duration);
+            if (isNaN(requestedTotal) || (req.duration && req.duration.toString().includes('Semana'))) {
+                const s = new Date(req.startDate + 'T00:00:00');
+                const e = new Date(req.endDate + 'T00:00:00');
+                requestedTotal = Math.ceil(Math.abs(e - s) / (1000 * 60 * 60 * 24)) + 1;
+            }
+            
+            const isEvangelismo = req.evangelismoTaken === true;
+            const feriados = this.getHolidaysInRange(req.startDate, req.endDate);
+            
+            let daysToRestore = isEvangelismo ? Math.max(0, requestedTotal - 10) : requestedTotal;
+            daysToRestore = Math.max(0, daysToRestore - feriados);
+
+            await empRef.update({
+                remainingDays: currentDays + daysToRestore
+            });
+
+            if (this.user && (this.user.id === eId || this.user.id == eId)) {
+                this.user.remainingDays = currentDays + daysToRestore;
+            }
+        }
+
+        // Purgar PDF Institucional generado al aprobar
+        if (this.storage) {
+            try {
+                const yearSub = new Date(req.startDate).getFullYear() || 2026;
+                const fileName = `Solicitud_${req.employeeName.replace(/\s+/g, '_')}_${new Date(req.startDate).getFullYear()}.pdf`;
+                const firePath = `vacaciones/${yearSub}/${req.employeeName}/${fileName}`;
+                await this.storage.ref(firePath).delete();
+                console.log(`🗑️ Archivo PDF oficial removido de la nube: ${firePath}`);
+            } catch (err) {
+                console.warn(`⚠️ No se pudo purgar el PDF porque no se encontró o la ruta difiere:`, err.message);
+            }
+        }
+    }
+
+    // Eliminar la solicitud
+    await docRef.delete();
+
+    // Notificar anulación por correo (RRHH)
+    this.sendEmailNotification(
+        'dominicanaeste@gmail.com',
+        `⚠️ MOVIMIENTO ANULADO: ${req.employeeName}`,
+        `Se ha anulado el movimiento de vacaciones de ${req.employeeName} del periodo ${req.startDate} al ${req.endDate}. Los días correspondientes han sido RESTRITUIDOS a su balance institucional.`
+    );
+
+    await this.loadRequests();
   },
 
   async archiveRequest(requestId) {
@@ -416,6 +555,27 @@ const state = {
     console.log(`ASUNTO: ${subject}`);
     console.log(`MSG: ${body}`);
     console.log("-----------------------------------------");
+    
+    // Soporte para la extensión 'Trigger Email' de Firebase
+    if (this.db) {
+        try {
+            await this.db.collection('mail').add({
+                to: email,
+                message: {
+                    subject: subject,
+                    text: body,
+                    html: `<div style="font-family: sans-serif; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; color: #1e293b;">
+                             <h2 style="color: #2f557f;">ADE Vacaciones - Notificación</h2>
+                             <p style="font-size: 1.1rem;">${body.replace(/\n/g, '<br>')}</p>
+                             <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;">
+                             <p style="font-size: 0.8rem; color: #64748b;">Este es un mensaje automático del sistema de Recursos Humanos de la Asociación Dominicana del Este.</p>
+                           </div>`
+                }
+            });
+        } catch (e) {
+            console.warn("⚠️ Falló el envío de correo persistente (¿Extensión instalada?):", e);
+        }
+    }
     return true;
   },
 
@@ -480,6 +640,29 @@ const state = {
     await this.db.collection('settings').doc('positions').set({ list: newList });
   },
 
+  async updateSupervisors(newList) {
+    this.supervisors = newList;
+    await this.db.collection('settings').doc('supervisors').set({ list: newList });
+  },
+
+  // 📝 GESTIÓN DE PERSONAL (CRUD NUBE)
+  async saveEmployee(empData) {
+    if (!this.db) return;
+    const id = empData.id || String(Date.now());
+    await this.db.collection('employees').doc(id).set({
+        ...empData,
+        id: id,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+    console.log(`✅ Empleado ${id} guardado en la nube.`);
+  },
+
+  async deleteEmployee(id) {
+    if (!this.db) return;
+    await this.db.collection('employees').doc(id).delete();
+    console.log(`🗑️ Empleado ${id} eliminado de la nube.`);
+  },
+
   async submitConflicto(data) {
     data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
     const docRef = await this.db.collection('conflict_declarations').add(data);
@@ -489,6 +672,11 @@ const state = {
   async deleteConflictDeclaration(id) {
     if (!this.db) return;
     await this.db.collection('conflict_declarations').doc(id).delete();
+  },
+
+  async updateConflicto(id, updates) {
+    if (!this.db) return;
+    await this.db.collection('conflict_declarations').doc(id).update(updates);
   },
 
   async addRequest(newReq) {
