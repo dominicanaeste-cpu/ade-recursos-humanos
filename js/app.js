@@ -1,5 +1,6 @@
-// --- CONFIGURACIÓN PARA CORREOS REALES (EMAILJS) ---
-// (Regístrate en EmailJS.com y pega tus llaves aquí para activar)
+// Version 1.0.2
+//-- CONFIGURACIÓN PARA CORREOS REALES (EMAILJS) ---
+ // RegRegísttraen EmailJS.com y pega tus llaves aquí para activar)
 const EMAILJS_PUBLIC_KEY = "cYGageOHAP7kjfc1y"; // Pega tu Public Key aquí
 const EMAILJS_SERVICE_ID = "service_wfa4jee"; // Pega tu Service ID aquí
 const EMAILJS_TEMPLATE_ID = "template_9cfjmjf"; // Pega tu Template ID aquí
@@ -335,22 +336,6 @@ const app = {
             <div style="display: flex; flex-direction: column; gap: 32px;">
                 <section class="card">
                     <h2 style="font-size: 1.1rem; color: var(--primary); margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
-                        <span class="material-symbols-outlined">rocket_launch</span>
-                        Accesos Rápidos
-                    </h2>
-                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
-                        <button class="btn btn-primary" onclick="app.navigate('form', event)"><span class="material-symbols-outlined">add</span>Solicitar Vacaciones</button>
-                        <button class="btn btn-tertiary" onclick="app.requestEvangelismo()"><span class="material-symbols-outlined">church</span>10 Días Evangelismo</button>
-                        <button class="btn" style="background: #fff1f2; color: #be123c;" onclick="app.requestLicense('Casamiento')"><span class="material-symbols-outlined">favorite</span>Licencia Casamiento (5d)</button>
-                        <button class="btn" style="background: #f8fafc; color: #475569;" onclick="app.requestLicense('Fallecimiento')"><span class="material-symbols-outlined">person_off</span>Licencia Fallecimiento (3d)</button>
-                        <button class="btn" style="background: #f0fdf4; color: #15803d;" onclick="app.requestLicense('Médica')"><span class="material-symbols-outlined">medical_services</span>Licencia Médica</button>
-                        <button class="btn" style="background: #be123c; color: white; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700;" onclick="app.navigate('conflicto')">
-                            <span class="material-symbols-outlined">shield_person</span> Declaración Conflicto
-                        </button>
-                    </div>
-                </section>
-
-                <section class="card">
                     <h2 style="font-size: 1.1rem; color: var(--primary); margin-bottom: 20px;">Mis Solicitudes Personales</h2>
                     <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
                         <thead><tr style="text-align: left; border-bottom: 2px solid #f1f5f9; color: var(--text-muted);"><th style="padding: 12px 0;">Licencia</th><th style="padding: 12px 0;">Días</th><th style="padding: 12px 0; text-align: center;">Estatus</th></tr></thead>
