@@ -813,9 +813,12 @@ const app = {
                                             ${evanAppr ? 'CONCEDIDO' : 'DISPONIBLE'}
                                         </span>
                                     </td>
-                                        <button class="btn" style="padding: 6px; background: #fff; border: 1px solid #e2e8f0; color: #475569;" onclick="app.resetEmployeePin('${e.id}')" title="Restaurar PIN Original">
-                                            <span class="material-symbols-outlined" style="font-size: 1.1rem;">key_off</span>
+                                    <td style="padding: 16px; display: flex; gap: 8px; justify-content: center;">
+                                        <!-- RESET PIN FIRST -->
+                                        <button class="btn" style="padding: 8px; background: #f1f5f9; border: 1.5px solid #cbd5e1; color: #475569;" onclick="app.resetEmployeePin('${e.id}')" title="Restaurar PIN Original">
+                                            <span class="material-symbols-outlined" style="font-size: 1.2rem;">key_off</span>
                                         </button>
+
                                         <button class="btn" style="padding: 6px 10px; font-size: 0.65rem; background: #fff; border: 1px solid #e2e8f0; color: #64748b;" onclick="app.toggleEvangelismo('${e.id}')">TOGGLE</button>
                                         <button class="btn" style="padding: 6px 10px; font-size: 0.65rem; background: var(--secondary); color: white; border: none;" onclick="app.generateEmployeeAudit('${e.id}')">AUDITORÍA</button>
                                         ${(() => {
