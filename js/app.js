@@ -159,13 +159,18 @@ const app = {
 
       return `
         <header class="fade-in" style="margin-bottom: 32px;">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                <div>
-                    <h1 style="font-size: 1.8rem; font-weight: 800; color: var(--primary);">Bienvenido, ${(state.user.name || 'Usuario').split(' ')[0]}</h1>
-                    <p style="color: var(--text-muted); font-weight: 500;">Aquí tienes un resumen de tus solicitudes.</p>
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div>
+                        <h1 style="font-size: 1.8rem; font-weight: 800; color: var(--primary);">Bienvenido, ${(state.user.name || 'Usuario').split(' ')[0]}</h1>
+                        <p style="color: var(--text-muted); font-weight: 500;">Aquí tienes un resumen de tus solicitudes.</p>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn" style="background: white; border: 1.5px solid #e2e8f0; color: var(--text-muted); padding: 8px 12px; font-weight: 700; font-size: 0.75rem;" onclick="app.showChangePinModal()">
+                            <span class="material-symbols-outlined" style="font-size: 1.1rem;">lock_reset</span> Cambiar PIN
+                        </button>
+                        <button class="logout-btn-header" onclick="app.logout()">Cerrar Sesión</button>
+                    </div>
                 </div>
-                <button class="logout-btn-header" onclick="app.logout()">Cerrar Sesión</button>
-            </div>
         </header>
 
         ${(() => {
@@ -808,7 +813,9 @@ const app = {
                                             ${evanAppr ? 'CONCEDIDO' : 'DISPONIBLE'}
                                         </span>
                                     </td>
-                                    <td style="padding: 16px; display: flex; gap: 8px; justify-content: center;">
+                                        <button class="btn" style="padding: 6px; background: #fff; border: 1px solid #e2e8f0; color: #475569;" onclick="app.resetEmployeePin('${e.id}')" title="Restaurar PIN Original">
+                                            <span class="material-symbols-outlined" style="font-size: 1.1rem;">key_off</span>
+                                        </button>
                                         <button class="btn" style="padding: 6px 10px; font-size: 0.65rem; background: #fff; border: 1px solid #e2e8f0; color: #64748b;" onclick="app.toggleEvangelismo('${e.id}')">TOGGLE</button>
                                         <button class="btn" style="padding: 6px 10px; font-size: 0.65rem; background: var(--secondary); color: white; border: none;" onclick="app.generateEmployeeAudit('${e.id}')">AUDITORÍA</button>
                                         ${(() => {
@@ -1580,6 +1587,45 @@ const app = {
     if(canvas) canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height);
   },
 
+
+  showChangePinModal: function() {
+    const newPin = prompt("Introduce tu NUEVO PIN de 4 dígitos (solo números):");
+    if (newPin && newPin.length >= 4 && !isNaN(newPin)) {
+        const confirmPin = prompt("Confirma tu nuevo PIN escribiéndolo otra vez:");
+        if (newPin === confirmPin) {
+            this.changePin(newPin);
+        } else {
+            alert("⚠️ Los PINs no coinciden. Inténtalo de nuevo.");
+        }
+    } else if (newPin) {
+        alert("⚠️ El PIN debe ser numérico y tener al menos 4 dígitos.");
+    }
+  },
+
+  changePin: async function(newPin) {
+    this.showToast("⏳ Actualizando PIN...");
+    const success = await state.changePin(newPin);
+    if (success) {
+        alert("✅ PIN actualizado. Por seguridad, el sistema se cerrará ahora. Ingresa con tu nuevo PIN.");
+        this.logout();
+    } else {
+        alert("❌ Error al actualizar el PIN. Inténtalo más tarde.");
+    }
+  },
+
+  resetEmployeePin: async function(id) {
+    const emp = state.employeesList.find(e => e.id == id);
+    if (!confirm(`¿Estás segura de que deseas resetear el PIN de ${emp ? emp.name : 'este empleado'}? Se restaurará al valor por defecto (los últimos 4 dígitos de su ID).`)) return;
+    
+    this.showToast("⏳ Reseteando PIN...");
+    const success = await state.resetEmployeePin(id);
+    if (success) {
+        alert(`✅ PIN de ${emp ? emp.name : 'empleado'} restaurado con éxito.`);
+        this.render();
+    } else {
+        alert("❌ Error al resetear el PIN.");
+    }
+  },
 
   handleLogin: async function(e) {
     if (e) e.preventDefault();

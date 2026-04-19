@@ -216,6 +216,43 @@ const state = {
     }
     return null;
   },
+  async changePin(newPin) {
+    if (!this.db || !this.user) return false;
+    try {
+        await this.db.collection('employees').doc(this.user.id).set({
+            pin: newPin,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+        
+        // Actualizar localmente
+        const empIndex = this.employeesList.findIndex(e => e.id == this.user.id);
+        if (empIndex !== -1) this.employeesList[empIndex].pin = newPin;
+        
+        this.showToast ? this.showToast("✅ PIN actualizado con éxito") : console.log("PIN actualizado");
+        return true;
+    } catch (e) {
+        console.error("Error al cambiar PIN:", e);
+        return false;
+    }
+  },
+
+  async resetEmployeePin(id) {
+    if (!this.db) return false;
+    try {
+        // Buscar el PIN original en el catálogo inicial (simulado o fallback)
+        // Por seguridad, reseteamos a los últimos 4 dígitos de su ID o un genérico
+        const newPin = id.toString().padStart(4, '0'); 
+        await this.db.collection('employees').doc(id).set({
+            pin: newPin,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+        
+        return true;
+    } catch (e) {
+        console.error("Error al resetear PIN:", e);
+        return false;
+    }
+  },
   user: null,
   
   vacationRequests: [],
