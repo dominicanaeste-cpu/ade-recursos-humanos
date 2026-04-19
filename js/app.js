@@ -4026,10 +4026,13 @@ const app = {
                                         <div style="font-weight: 700; color: var(--primary); font-size: 0.9rem;">${e.name}</div>
                                         <div style="font-size: 0.7rem; color: var(--text-muted);">${e.position}</div>
                                     </td>
-                                    <td style="padding: 14px 16px; font-family: monospace; font-weight: 700; color: #0891b2; letter-spacing: 0.1em;">${e.pin}</td>
+                                    <td style="padding: 14px 16px; font-family: monospace; font-weight: 700; color: #64748b; letter-spacing: 0.1em;">****</td>
                                     <td style="padding: 14px 16px;"><span class="badge" style="background: #e0f2fe; color: #0369a1; font-size: 0.7rem;">${e.cat}</span></td>
                                     <td style="padding: 14px 16px; font-weight: 700;">${e.years}</td>
-                                    <td style="padding: 14px 16px; text-align: right;">
+                                    <td style="padding: 14px 16px; text-align: right; display: flex; justify-content: flex-end; gap: 4px;">
+                                        <button class="btn" style="padding: 6px; background: #f8fafc; color: #475569; border: 1px solid #e2e8f0;" onclick="app.resetEmployeePin('${e.id}')" title="Restaurar PIN">
+                                            <span class="material-symbols-outlined" style="font-size: 1.1rem;">key_off</span>
+                                        </button>
                                         <button class="btn" style="padding: 6px; background: transparent; color: var(--primary);" onclick="app.editEmployeeUI('${e.id}')">
                                             <span class="material-symbols-outlined" style="font-size: 1.2rem;">edit_note</span>
                                         </button>
