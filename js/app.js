@@ -492,13 +492,21 @@ const app = {
                                 <td style="padding: 16px; font-weight: 800; color: #0891b2;">${r.startDate}</td>
                                 <td style="padding: 16px; font-weight: 800; color: #0d9488;">${r.endDate}</td>
                                 <td style="padding: 16px; text-align: center;">
-                                    ${r.startDate > today ? 
-                                        `<span style="background: #e0f2fe; color: #0369a1; padding: 4px 10px; border-radius: 999px; font-size: 0.65rem; font-weight: 800;">PROGRAMADO</span>` : 
-                                        (r.endDate >= today ? 
-                                            `<span style="background: #f0fdf4; color: #166534; padding: 4px 10px; border-radius: 999px; font-size: 0.65rem; font-weight: 800;">EN CURSO</span>` :
-                                            `<span style="background: #f1f5f9; color: #64748b; padding: 4px 10px; border-radius: 999px; font-size: 0.65rem; font-weight: 800;">COMPLETADO</span>`
-                                        )
-                                    }
+                                    ${(() => {
+                                        const endD = new Date(r.endDate + 'T00:00:00');
+                                        const startD = new Date(r.startDate + 'T00:00:00');
+                                        const now = new Date(today + 'T00:00:00');
+                                        if (r.startDate > today) {
+                                            const diff = Math.ceil((startD - now) / (1000 * 60 * 60 * 24));
+                                            return `<span style="background: #e0f2fe; color: #0369a1; padding: 4px 10px; border-radius: 999px; font-size: 0.65rem; font-weight: 800;">PROGRAMADO (En ${diff}d)</span>`;
+                                        } else if (r.endDate >= today) {
+                                            const diff = Math.ceil((endD - now) / (1000 * 60 * 60 * 24));
+                                            const text = diff === 0 ? "ÚLTIMO DÍA" : `Faltan ${diff}d`;
+                                            return `<span style="background: #f0fdf4; color: #166534; padding: 4px 10px; border-radius: 999px; font-size: 0.65rem; font-weight: 800;">EN CURSO (${text})</span>`;
+                                        } else {
+                                            return `<span style="background: #f1f5f9; color: #64748b; padding: 4px 10px; border-radius: 999px; font-size: 0.65rem; font-weight: 800;">COMPLETADO</span>`;
+                                        }
+                                    })()}
                                 </td>
                             </tr>
                             `).join('');
@@ -752,13 +760,21 @@ const app = {
                                 <td style="padding: 16px; font-weight: 800; color: #0891b2;">${r.startDate}</td>
                                 <td style="padding: 16px; font-weight: 800; color: #0d9488;">${r.endDate}</td>
                                 <td style="padding: 16px; text-align: center;">
-                                    ${r.startDate > today ? 
-                                        `<span style="background: #e0f2fe; color: #0369a1; padding: 4px 10px; border-radius: 999px; font-size: 0.65rem; font-weight: 800;">PROGRAMADO</span>` : 
-                                        (r.endDate >= today ? 
-                                            `<span style="background: #f0fdf4; color: #166534; padding: 4px 10px; border-radius: 999px; font-size: 0.65rem; font-weight: 800;">EN CURSO</span>` :
-                                            `<span style="background: #f1f5f9; color: #64748b; padding: 4px 10px; border-radius: 999px; font-size: 0.65rem; font-weight: 800;">COMPLETADO</span>`
-                                        )
-                                    }
+                                    ${(() => {
+                                        const endD = new Date(r.endDate + 'T00:00:00');
+                                        const startD = new Date(r.startDate + 'T00:00:00');
+                                        const now = new Date(today + 'T00:00:00');
+                                        if (r.startDate > today) {
+                                            const diff = Math.ceil((startD - now) / (1000 * 60 * 60 * 24));
+                                            return `<span style="background: #e0f2fe; color: #0369a1; padding: 4px 10px; border-radius: 999px; font-size: 0.65rem; font-weight: 800;">PROGRAMADO (En ${diff}d)</span>`;
+                                        } else if (r.endDate >= today) {
+                                            const diff = Math.ceil((endD - now) / (1000 * 60 * 60 * 24));
+                                            const text = diff === 0 ? "ÚLTIMO DÍA" : `Faltan ${diff}d`;
+                                            return `<span style="background: #f0fdf4; color: #166534; padding: 4px 10px; border-radius: 999px; font-size: 0.65rem; font-weight: 800;">EN CURSO (${text})</span>`;
+                                        } else {
+                                            return `<span style="background: #f1f5f9; color: #64748b; padding: 4px 10px; border-radius: 999px; font-size: 0.65rem; font-weight: 800;">COMPLETADO</span>`;
+                                        }
+                                    })()}
                                 </td>
                                 ${isHR ? `
                                     <td style="padding: 16px; text-align: center;">
