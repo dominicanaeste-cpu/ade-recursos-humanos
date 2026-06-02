@@ -427,13 +427,18 @@ const state = {
             }
             
             // REGLAMENTO OFICIAL:
-            // 1. Si tiene evangelismo, los 10 días se restan del total del periodo (no consumen cuota).
-            // 2. Los feriados NO se descuentan del balance anual (son beneficio libre).
-            const isEvangelismo = req.evangelismoTaken === true;
-            const feriados = this.getHolidaysInRange(req.startDate, req.endDate);
-            
-            let daysToDiscount = isEvangelismo ? Math.max(0, requestedTotal - 10) : requestedTotal;
-            daysToDiscount = Math.max(0, daysToDiscount - feriados);
+            // 1. Solo las vacaciones reales descuentan del balance.
+            // 2. Si tiene evangelismo, los 10 días se restan del total del periodo (no consumen cuota).
+            // 3. Los feriados NO se descuentan del balance anual (son beneficio libre).
+            const isVacation = ['Local', 'Internacional', 'Conjunta', 'Vacaciones (Real)', 'Vacaciones (Cierre)'].includes(req.category);
+            let daysToDiscount = 0;
+            if (isVacation) {
+                const isEvangelismo = req.evangelismoTaken === true;
+                const feriados = this.getHolidaysInRange(req.startDate, req.endDate);
+                
+                daysToDiscount = isEvangelismo ? Math.max(0, requestedTotal - 10) : requestedTotal;
+                daysToDiscount = Math.max(0, daysToDiscount - feriados);
+            }
 
             await empRef.update({
                 remainingDays: Math.max(0, currentDays - daysToDiscount)
@@ -525,11 +530,15 @@ const state = {
                 requestedTotal = Math.ceil(Math.abs(e - s) / (1000 * 60 * 60 * 24)) + 1;
             }
             
-            const isEvangelismo = req.evangelismoTaken === true;
-            const feriados = this.getHolidaysInRange(req.startDate, req.endDate);
-            
-            let daysToRestore = isEvangelismo ? Math.max(0, requestedTotal - 10) : requestedTotal;
-            daysToRestore = Math.max(0, daysToRestore - feriados);
+            const isVacation = ['Local', 'Internacional', 'Conjunta', 'Vacaciones (Real)', 'Vacaciones (Cierre)'].includes(req.category);
+            let daysToRestore = 0;
+            if (isVacation) {
+                const isEvangelismo = req.evangelismoTaken === true;
+                const feriados = this.getHolidaysInRange(req.startDate, req.endDate);
+                
+                daysToRestore = isEvangelismo ? Math.max(0, requestedTotal - 10) : requestedTotal;
+                daysToRestore = Math.max(0, daysToRestore - feriados);
+            }
 
             await empRef.update({
                 remainingDays: currentDays + daysToRestore
@@ -632,11 +641,15 @@ const state = {
           periodTotal = Math.ceil(Math.abs(e - s) / (1000 * 60 * 60 * 24)) + 1;
       }
 
-      const isEvangelismo = req.evangelismoTaken === true;
-      const feriados = this.getHolidaysInRange(req.startDate, req.endDate);
-      
-      let daysToReturn = isEvangelismo ? Math.max(0, periodTotal - 10) : periodTotal;
-      daysToReturn = Math.max(0, daysToReturn - feriados);
+      const isVacation = ['Local', 'Internacional', 'Conjunta', 'Vacaciones (Real)', 'Vacaciones (Cierre)'].includes(req.category);
+      let daysToReturn = 0;
+      if (isVacation) {
+          const isEvangelismo = req.evangelismoTaken === true;
+          const feriados = this.getHolidaysInRange(req.startDate, req.endDate);
+          
+          daysToReturn = isEvangelismo ? Math.max(0, periodTotal - 10) : periodTotal;
+          daysToReturn = Math.max(0, daysToReturn - feriados);
+      }
 
       // 2. ACTUALIZAR BALANCE DEL EMPLEADO
       const eId = req.employeeId || req.userId || req.idEmpleado;

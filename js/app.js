@@ -475,6 +475,7 @@ const app = {
                             <th style="padding: 16px; font-weight: 800; color: #64748b;">Colaborador</th>
                             <th style="padding: 16px; font-weight: 800; color: #64748b;">Salida</th>
                             <th style="padding: 16px; font-weight: 800; color: #64748b;">Regreso</th>
+                            <th style="padding: 16px; font-weight: 800; color: #64748b; text-align: center;">Días p/ Regreso</th>
                             <th style="padding: 16px; font-weight: 800; color: #64748b; text-align: center;">Estado</th>
                         </tr>
                     </thead>
@@ -484,13 +485,25 @@ const app = {
                             const sorted = approved.sort((a,b) => new Date(a.startDate) - new Date(b.startDate));
                             const today = new Date().toISOString().split('T')[0];
                             
-                            if (sorted.length === 0) return '<tr><td colspan="4" style="text-align:center; padding:32px; color:#64748b;">No hay movimientos aprobados registrados aún.</td></tr>';
+                            if (sorted.length === 0) return '<tr><td colspan="5" style="text-align:center; padding:32px; color:#64748b;">No hay movimientos aprobados registrados aún.</td></tr>';
                             
                             return sorted.map(r => `
                             <tr style="border-bottom: 1px solid #f1f5f9;">
                                 <td style="padding: 16px; font-weight: 700; color: #1e3a8a;">${r.employeeName}</td>
                                 <td style="padding: 16px; font-weight: 800; color: #0891b2;">${r.startDate}</td>
                                 <td style="padding: 16px; font-weight: 800; color: #0d9488;">${r.endDate}</td>
+                                <td style="padding: 16px; text-align: center; vertical-align: middle;">
+                                    ${(() => {
+                                        const endD = new Date(r.endDate + 'T00:00:00');
+                                        const startD = new Date(r.startDate + 'T00:00:00');
+                                        const now = new Date(today + 'T00:00:00');
+                                        if (startD <= now && endD >= now) {
+                                            const diff = Math.ceil((endD - now) / (1000 * 60 * 60 * 24));
+                                            return `<div style="display:inline-block; background:#ffe4e6; padding:4px 12px; border-radius:12px; border:1px solid #fecdd3;"><span style="color: #e11d48; font-weight: 900; font-size: 1.1rem;">${diff}</span> <span style="font-size: 0.7rem; color: #be123c; font-weight: 800;">DÍAS</span></div>`;
+                                        }
+                                        return `<span style="color: #cbd5e1; font-weight: 800;">-</span>`;
+                                    })()}
+                                </td>
                                 <td style="padding: 16px; text-align: center;">
                                     ${(() => {
                                         const endD = new Date(r.endDate + 'T00:00:00');
@@ -534,7 +547,7 @@ const app = {
                                     if (state.user.supervisorDept !== 'Presidencia') return '';
                                     if (req.category !== 'Evangelismo' && req.evangelismoTaken !== true) return '';
                                     const currYear = new Date().getFullYear();
-                                    const hasEvan = (state.vacationRequests || []).some(r => r.employeeName === req.employeeName && (r.category === 'Evangelismo' || r.evangelismoTaken) && r.status === 'approved' && new Date(r.startDate).getFullYear() === currYear);
+                                    const hasEvan = (state.vacationRequests || []).some(r => r.id !== req.id && r.employeeName === req.employeeName && (r.category === 'Evangelismo' || r.evangelismoTaken) && r.status === 'approved' && parseInt(r.startDate.split('-')[0]) === currYear);
                                     if (hasEvan) {
                                         return `<p style="margin-top: 8px; font-size: 0.75rem; color: #b91c1c; font-weight: 800; background: #fee2e2; padding: 6px; border-radius: 6px; border: 1px solid #fca5a5; display: inline-block;">⚠️ ALERTA: ${req.employeeName} YA TOMÓ sus 10 días de Evangelismo en este año.</p>`;
                                     } else {
@@ -598,6 +611,7 @@ const app = {
       const pending = allReqs.filter(r => r.status === 'pending_hr' && (app.currentFilter === 'All' || r.category === app.currentFilter));
       const approved = allReqs.filter(r => r.status === 'approved' && (app.currentFilter === 'All' || r.category === app.currentFilter));
       const totalConflicts = (state.conflictDeclarations || []).length;
+      const noPhotoCount = (state.employeesList || []).filter(e => !e.photo).length;
 
       return `
         <header class="fade-in" style="margin-bottom: 32px; display: flex; flex-direction: column; gap: 20px;">
@@ -664,6 +678,10 @@ const app = {
                 <div style="margin-left: auto; display: flex; gap: 8px; align-items: center;">
                     <button class="btn" style="background: #eef2ff; color: #4338ca; font-weight: 800; height: 40px; display: flex; align-items: center; gap: 8px;" onclick="app.showAnnualPlansManager()">
                         <span class="material-symbols-outlined" style="font-size: 1.2rem;">fact_check</span> CONTROL DE PLANIFICACIÓN ANUAL DE VACACIONES
+                    </button>
+                    <button class="btn" style="background: #fdf2f8; color: #be185d; height: 40px; font-weight: 800; display: flex; align-items: center; gap: 6px; position: relative;" onclick="app.manageEmployeePhotos('no')">
+                        <span class="material-symbols-outlined" style="font-size: 1.1rem;">camera_enhance</span> FOTOS
+                        ${noPhotoCount > 0 ? `<span style="background: #e11d48; color: white; font-size: 0.65rem; font-weight: 800; padding: 1px 6px; border-radius: 9999px; margin-left: 2px;">${noPhotoCount}</span>` : ''}
                     </button>
                     <button class="btn" style="background: #0ea5e9; color: white; height: 40px; font-weight: 800;" onclick="app.toggleEmployeeEditor()">👥 GESTIÓN DE PERSONAL</button>
                     <button class="btn" style="background: #1e293b; color: white; height: 40px; font-weight: 800;" onclick="app.togglePositionsEditor()">🛠️ ROLES</button>
@@ -740,6 +758,7 @@ const app = {
                             <th style="padding: 16px; font-size: 0.75rem; text-transform: uppercase; color: #64748b; font-weight: 800;">Colaborador</th>
                             <th style="padding: 16px; font-size: 0.75rem; text-transform: uppercase; color: #64748b; font-weight: 800;">Salida</th>
                             <th style="padding: 16px; font-size: 0.75rem; text-transform: uppercase; color: #64748b; font-weight: 800;">Regreso</th>
+                            <th style="padding: 16px; font-size: 0.75rem; text-transform: uppercase; color: #64748b; font-weight: 800; text-align: center;">Días p/ Regreso</th>
                             <th style="padding: 16px; font-size: 0.75rem; text-transform: uppercase; color: #64748b; font-weight: 800; text-align: center;">Estado</th>
                             ${(state.user && (state.user.role === 'hr' || (state.user.permissions && state.user.permissions.includes('hr')))) ? '<th style="padding: 16px; font-size: 0.75rem; text-transform: uppercase; color: #64748b; font-weight: 800; text-align: center;">ANULAR</th>' : ''}
                         </tr>
@@ -752,13 +771,25 @@ const app = {
                             
                             const isHR = state.user && (state.user.role === 'hr' || (state.user.permissions && state.user.permissions.includes('hr')));
 
-                            if (sorted.length === 0) return `<tr><td colspan="${isHR ? 5 : 4}" style="text-align:center; padding:32px; color:#64748b;">No hay movimientos aprobados registrados aún.</td></tr>`;
+                            if (sorted.length === 0) return `<tr><td colspan="${isHR ? 6 : 5}" style="text-align:center; padding:32px; color:#64748b;">No hay movimientos aprobados registrados aún.</td></tr>`;
                             
                             return sorted.map(r => `
                             <tr style="border-bottom: 1px solid #f1f5f9;">
                                 <td style="padding: 16px; font-weight: 700; color: var(--primary);">${r.employeeName}</td>
                                 <td style="padding: 16px; font-weight: 800; color: #0891b2;">${r.startDate}</td>
                                 <td style="padding: 16px; font-weight: 800; color: #0d9488;">${r.endDate}</td>
+                                <td style="padding: 16px; text-align: center; vertical-align: middle;">
+                                    ${(() => {
+                                        const endD = new Date(r.endDate + 'T00:00:00');
+                                        const startD = new Date(r.startDate + 'T00:00:00');
+                                        const now = new Date(today + 'T00:00:00');
+                                        if (startD <= now && endD >= now) {
+                                            const diff = Math.ceil((endD - now) / (1000 * 60 * 60 * 24));
+                                            return `<div style="display:inline-block; background:#ffe4e6; padding:4px 12px; border-radius:12px; border:1px solid #fecdd3;"><span style="color: #e11d48; font-weight: 900; font-size: 1.1rem;">${diff}</span> <span style="font-size: 0.7rem; color: #be123c; font-weight: 800;">DÍAS</span></div>`;
+                                        }
+                                        return `<span style="color: #cbd5e1; font-weight: 800;">-</span>`;
+                                    })()}
+                                </td>
                                 <td style="padding: 16px; text-align: center;">
                                     ${(() => {
                                         const endD = new Date(r.endDate + 'T00:00:00');
@@ -928,6 +959,7 @@ const app = {
       const numConflicts = (state.conflictDeclarations || []).length;
       const allReqs = (state.vacationRequests || []);
       const approved = allReqs.filter(r => r.status === 'approved');
+      const noPhotoCount = (state.employeesList || []).filter(e => !e.photo).length;
 
       return `
         <header class="fade-in" style="margin-bottom: 32px; display: flex; justify-content: space-between; align-items: center; background: white; padding: 24px; border-radius: 16px; border: 1px solid #e2e8f0;">
@@ -954,8 +986,9 @@ const app = {
                     <button class="btn" style="background: #f0f9ff; color: #0369a1; font-weight: 800; height: 60px; flex-direction: column; gap: 4px;" onclick="app.downloadAllApprovedPDFs()">
                         <span class="material-symbols-outlined" style="font-size: 1.2rem;">file_download</span> Bajar Todo
                     </button>
-                    <button class="btn" style="background: #fdf2f8; color: #be185d; font-weight: 800; height: 60px; flex-direction: column; gap: 4px;" onclick="app.manageEmployeePhotos()">
+                    <button class="btn" style="background: #fdf2f8; color: #be185d; font-weight: 800; height: 60px; flex-direction: column; gap: 4px; position: relative;" onclick="app.manageEmployeePhotos('no')">
                         <span class="material-symbols-outlined" style="font-size: 1.2rem;">camera_enhance</span> Foto Empleado
+                        ${noPhotoCount > 0 ? `<span style="position: absolute; top: -6px; right: -6px; background: #e11d48; color: white; font-size: 0.65rem; font-weight: 800; padding: 2px 6px; border-radius: 9999px; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">${noPhotoCount} sin foto</span>` : ''}
                     </button>
                     <button class="btn" style="background: var(--primary); color: white; font-weight: 800; height: 60px; flex-direction: column; gap: 4px;" onclick="app.showGlobalCalendar()">
                         <span class="material-symbols-outlined" style="font-size: 1.2rem;">calendar_month</span> Calendario
@@ -1178,7 +1211,7 @@ const app = {
 
                     ${(() => {
                         const currYear = new Date().getFullYear();
-                        const hasEvan = (state.vacationRequests || []).some(r => r.idEmpleado === state.user.id && (r.category === 'Evangelismo' || r.evangelismoTaken) && r.status === 'approved' && new Date(r.startDate).getFullYear() === currYear);
+                        const hasEvan = (state.vacationRequests || []).some(r => (r.idEmpleado === state.user.id || r.employeeId === state.user.id || r.userId === state.user.id) && (r.category === 'Evangelismo' || r.evangelismoTaken) && r.status !== 'rejected' && parseInt(r.startDate.split('-')[0]) === currYear);
                         if (hasEvan) {
                             return `
                                 <div style="margin-top: 12px; padding: 10px; background: #fee2e2; border-radius: 8px; border: 1px solid #fca5a5;">
@@ -1931,9 +1964,18 @@ const app = {
         // Si incluye evangelismo, descontamos 10 días para validar el balance reglamentario
         const daysForQuota = includeEvangelismo ? diffDays - 10 : diffDays;
 
+        const feriados = state.getHolidaysInRange ? state.getHolidaysInRange(startDate, endDate) : 0;
+        const daysToDiscount = Math.max(0, daysForQuota - feriados);
+
         if (daysForQuota >= 0) {
-            display.innerText = `${daysForQuota} Días${includeEvangelismo ? ' + 10 días Evangelismo' : ''}`;
-            display.style.color = '#10b981';
+            const userRemaining = state.user && state.user.remainingDays !== undefined ? state.user.remainingDays : 999;
+            if (daysToDiscount > userRemaining) {
+                display.innerText = `${daysForQuota} Días${includeEvangelismo ? ' + 10 días Evangelismo' : ''} (Supera saldo disponible de ${userRemaining} días)`;
+                display.style.color = '#ef4444';
+            } else {
+                display.innerText = `${daysForQuota} Días${includeEvangelismo ? ' + 10 días Evangelismo' : ''}`;
+                display.style.color = '#10b981';
+            }
         } else {
             display.innerText = "Fechas Inválidas";
             display.style.color = '#ef4444';
@@ -2040,6 +2082,15 @@ const app = {
         if (daysForQuota < 0) {
             return alert("⚠️ BLOQUEO INSTITUCIONAL: Revise las fechas seleccionadas.");
         }
+
+        const feriados = state.getHolidaysInRange ? state.getHolidaysInRange(start, end) : 0;
+        const daysToDiscount = Math.max(0, daysForQuota - feriados);
+        const userRemaining = state.user && state.user.remainingDays !== undefined ? state.user.remainingDays : 999;
+
+        if (daysToDiscount > userRemaining) {
+            return alert(`⚠️ BLOQUEO INSTITUCIONAL: No puede solicitar más de los días que le corresponden. Su saldo de vacaciones restante es de ${userRemaining} días, pero esta solicitud descontaría ${daysToDiscount} días (total solicitado: ${finalDays} días, feriados: ${feriados}${includeEvangelismo ? ', evangelismo: 10 días' : ''}).`);
+        }
+
         durationText = `${daysForQuota} Días${includeEvangelismo ? ' + 10 días Evangelismo' : ''}`;
     } else if (type === 'Casamiento') {
         finalDays = 5;
@@ -2687,7 +2738,7 @@ const app = {
 
   requestEvangelismo: function() {
     const currYear = new Date().getFullYear();
-    const hasEvan = (state.vacationRequests || []).some(r => r.idEmpleado === state.user.id && (r.category === 'Evangelismo' || r.evangelismoTaken) && r.status === 'approved' && new Date(r.startDate).getFullYear() === currYear);
+    const hasEvan = (state.vacationRequests || []).some(r => (r.idEmpleado === state.user.id || r.employeeId === state.user.id || r.userId === state.user.id) && (r.category === 'Evangelismo' || r.evangelismoTaken) && r.status !== 'rejected' && parseInt(r.startDate.split('-')[0]) === currYear);
     
     if (hasEvan) {
         return alert("🚫 RESTRICTO POR REGLAMENTO\n\nUsted ya tiene autorizados 10 días de Evangelismo en este año calendario. El reglamento institucional no permite duplicidad anual.");
@@ -3111,34 +3162,122 @@ const app = {
     win.document.close();
   },
 
-  manageEmployeePhotos: function() {
+  manageEmployeePhotos: function(activeFilter = 'all') {
+      // Clean up previous modal if it exists
+      const existing = document.getElementById('photo_gallery_modal');
+      if (existing) existing.remove();
+
+      const totalEmp = state.employeesList.length;
+      const withPhotoCount = state.employeesList.filter(e => e.photo).length;
+      const noPhotoCount = totalEmp - withPhotoCount;
+
       const html = `
-          <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 20px;">
-              <div class="card fade-in" style="width: 100%; max-width: 800px; max-height: 90vh; overflow-y: auto; background: white;">
-                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px;">
-                      <h2 style="color: var(--primary); font-weight: 800;">Galería de Fotos Institucional</h2>
-                      <button onclick="this.parentElement.parentElement.parentElement.remove()" style="background: none; border: none; cursor: pointer; color: #ef4444; font-weight: 800;">CERRAR</button>
+          <div id="photo_gallery_modal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px);">
+              <div class="card fade-in glass" style="width: 100%; max-width: 850px; max-height: 90vh; overflow-y: auto; background: white; border-radius: 16px; display: flex; flex-direction: column; padding: 24px;">
+                  
+                  <!-- Modal Header -->
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #f1f5f9; padding-bottom: 12px; flex-shrink: 0;">
+                      <div>
+                          <h2 style="color: var(--primary); font-weight: 800; font-family: 'Outfit', sans-serif; display: flex; align-items: center; gap: 8px; margin: 0;">
+                              <span class="material-symbols-outlined" style="font-size: 28px;">camera_enhance</span> Galería de Fotos Institucional
+                          </h2>
+                          <p style="font-size: 0.75rem; color: var(--text-muted); margin: 4px 0 0 0;">
+                              Total: <b>${totalEmp}</b> | Con Foto: <b style="color: #166534;">${withPhotoCount}</b> | Sin Foto: <b style="color: #be123c;">${noPhotoCount}</b>
+                          </p>
+                      </div>
+                      <button onclick="document.getElementById('photo_gallery_modal').remove()" style="background: #fee2e2; border: none; cursor: pointer; color: #ef4444; font-weight: 800; padding: 6px 12px; border-radius: 8px; font-size: 0.8rem;">CERRAR</button>
                   </div>
-                  <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 16px;">
-                      ${state.employeesList.map(emp => `
-                          <div class="card" style="padding: 10px; text-align: center; background: #f8fafc; border: 1px solid #e2e8f0;">
-                              <div style="width: 80px; height: 80px; border-radius: 50%; background: #e2e8f0; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                                  ${emp.photo ? `<img src="${emp.photo}" style="width: 100%; height: 100%; object-fit: cover;">` : `<span class="material-symbols-outlined" style="font-size: 40px; color: #94a3b8;">person</span>`}
-                              </div>
-                              <p style="font-size: 0.65rem; font-weight: 700; color: #1e3a8a; height: 32px; overflow: hidden;">${emp.name}</p>
-                              <button class="btn" style="padding: 4px; font-size: 0.6rem; width: 100%; justify-content: center; margin-top: 8px; background: #e0f2fe; color: #0369a1;" onclick="app.uploadEmployeePhoto('${emp.id}')">
-                                  CAMBIAR
-                              </button>
-                          </div>
-                      `).join('')}
+
+                  <!-- Filter Tabs -->
+                  <div style="display: flex; gap: 8px; margin-bottom: 20px; flex-shrink: 0;">
+                      <button id="tab_photo_all" class="btn" style="padding: 8px 16px; font-size: 0.75rem; background: ${activeFilter === 'all' ? 'var(--primary)' : '#f1f5f9'}; color: ${activeFilter === 'all' ? 'white' : '#475569'}; font-weight: 700;" onclick="app.filterPhotoGallery('all')">
+                          Todos (${totalEmp})
+                      </button>
+                      <button id="tab_photo_yes" class="btn" style="padding: 8px 16px; font-size: 0.75rem; background: ${activeFilter === 'yes' ? '#166534' : '#f1f5f9'}; color: ${activeFilter === 'yes' ? 'white' : '#475569'}; font-weight: 700;" onclick="app.filterPhotoGallery('yes')">
+                          Con Foto (${withPhotoCount})
+                      </button>
+                      <button id="tab_photo_no" class="btn" style="padding: 8px 16px; font-size: 0.75rem; background: ${activeFilter === 'no' ? '#be123c' : '#f1f5f9'}; color: ${activeFilter === 'no' ? 'white' : '#475569'}; font-weight: 700;" onclick="app.filterPhotoGallery('no')">
+                          ⚠️ Falta Foto (${noPhotoCount})
+                      </button>
                   </div>
+
+                  <!-- Grid container -->
+                  <div style="flex: 1; overflow-y: auto; min-height: 200px;">
+                      <div id="photo_gallery_grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(135px, 1fr)); gap: 16px; padding: 4px;">
+                          <!-- Grid items will be dynamically injected here -->
+                      </div>
+                  </div>
+
               </div>
           </div>
       `;
       document.body.insertAdjacentHTML('beforeend', html);
+      this.filterPhotoGallery(activeFilter);
   },
 
-  uploadEmployeePhoto: async function(empId) {
+  filterPhotoGallery: function(filter) {
+      const grid = document.getElementById('photo_gallery_grid');
+      if (!grid) return;
+
+      // Update button colors
+      const btnAll = document.getElementById('tab_photo_all');
+      const btnYes = document.getElementById('tab_photo_yes');
+      const btnNo = document.getElementById('tab_photo_no');
+
+      if (btnAll) {
+          btnAll.style.background = filter === 'all' ? 'var(--primary)' : '#f1f5f9';
+          btnAll.style.color = filter === 'all' ? 'white' : '#475569';
+      }
+      if (btnYes) {
+          btnYes.style.background = filter === 'yes' ? '#166534' : '#f1f5f9';
+          btnYes.style.color = filter === 'yes' ? 'white' : '#475569';
+      }
+      if (btnNo) {
+          btnNo.style.background = filter === 'no' ? '#be123c' : '#f1f5f9';
+          btnNo.style.color = filter === 'no' ? 'white' : '#475569';
+      }
+
+      // Filter employees
+      let list = state.employeesList;
+      if (filter === 'yes') {
+          list = state.employeesList.filter(e => e.photo);
+      } else if (filter === 'no') {
+          list = state.employeesList.filter(e => !e.photo);
+      }
+
+      // Generate HTML
+      if (list.length === 0) {
+          grid.innerHTML = `
+              <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #94a3b8;">
+                  <span class="material-symbols-outlined" style="font-size: 48px; color: #cbd5e1; margin-bottom: 8px;">image_not_supported</span>
+                  <p style="font-weight: 600; font-size: 0.9rem;">No hay colaboradores en esta sección.</p>
+              </div>
+          `;
+          return;
+      }
+
+      grid.innerHTML = list.map(emp => `
+          <div class="card fade-in" style="padding: 12px; text-align: center; background: #f8fafc; border: 1px solid ${emp.photo ? '#e2e8f0' : '#fca5a5'}; position: relative; border-radius: 12px;">
+              ${!emp.photo ? `
+                  <span style="position: absolute; top: 6px; right: 6px; background: #fee2e2; color: #b91c1c; font-size: 0.55rem; font-weight: 800; padding: 2px 6px; border-radius: 4px; border: 1px solid #fca5a5;">
+                      SIN FOTO
+                  </span>
+              ` : ''}
+              <div style="width: 80px; height: 80px; border-radius: 50%; background: #e2e8f0; margin: 8px auto 10px; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 3px solid white; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+                  ${emp.photo ? `<img src="${emp.photo}" style="width: 100%; height: 100%; object-fit: cover;">` : `<span class="material-symbols-outlined" style="font-size: 40px; color: #94a3b8;">person</span>`}
+              </div>
+              <p style="font-size: 0.65rem; font-weight: 800; color: #1e3a8a; height: 32px; overflow: hidden; display: flex; align-items: center; justify-content: center; line-height: 1.2;">
+                  ${emp.name}
+              </p>
+              <button class="btn" style="padding: 6px; font-size: 0.6rem; width: 100%; justify-content: center; margin-top: 8px; background: ${emp.photo ? '#e0f2fe' : '#fee2e2'}; color: ${emp.photo ? '#0369a1' : '#b91c1c'}; font-weight: 800; border: none; border-radius: 6px; display: flex; align-items: center; gap: 4px;" onclick="app.uploadEmployeePhoto('${emp.id}', '${filter}')">
+                  <span class="material-symbols-outlined" style="font-size: 0.95rem;">add_a_photo</span>
+                  ${emp.photo ? 'CAMBIAR' : 'SUBIR'}
+              </button>
+          </div>
+      `).join('');
+  },
+
+  uploadEmployeePhoto: async function(empId, activeFilter = 'all') {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*';
@@ -3165,9 +3304,9 @@ const app = {
                 }
 
                 this.showToast("✅ Foto actualizada con éxito");
-                const modal = document.querySelector('div[style*="z-index: 2000"]');
+                const modal = document.getElementById('photo_gallery_modal');
                 if (modal) modal.remove();
-                this.manageEmployeePhotos();
+                this.manageEmployeePhotos(activeFilter);
                 this.render(); // Refrescar Sidebar
             } catch(err) {
                 console.error(err);
