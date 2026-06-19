@@ -43,6 +43,21 @@ const state = {
     
     // 🚀 NUEVO: Migración a Firebase dinámica
     if (this.db) {
+        // Corrección del balance de Junior Feliz (ID "17")
+        try {
+            const juniorRef = this.db.collection('employees').doc('17');
+            const juniorDoc = await juniorRef.get();
+            if (juniorDoc.exists) {
+                const data = juniorDoc.data();
+                if (data.remainingDays !== 28) {
+                    await juniorRef.update({ remainingDays: 28 });
+                    console.log("✅ Balance de Junior Feliz corregido a 28 días en Firestore.");
+                }
+            }
+        } catch (err) {
+            console.error("Error corrigiendo balance de Junior Feliz:", err);
+        }
+
         try {
             const snap = await this.db.collection('employees').get();
             this.employeesList = [];
