@@ -617,11 +617,11 @@ const app = {
         <header class="fade-in" style="margin-bottom: 32px; display: flex; flex-direction: column; gap: 20px;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div>
-                    <h1 style="font-family: 'Outfit', sans-serif; font-size: 2.2rem; font-weight: 800; color: var(--primary); letter-spacing: -0.02em;">Panel de Recursos Humanos</h1>
-                    <p style="color: var(--text-muted); font-weight: 500; font-size: 1rem;">Gestión institucional de personal y archivo de nuble.</p>
+                    <h1 style="font-family: 'Outfit', sans-serif; font-size: 1.8rem; font-weight: 800; color: var(--primary); letter-spacing: -0.02em;">Panel de Recursos Humanos</h1>
+                    <p style="color: var(--text-muted); font-weight: 500;">Gestión institucional de personal y archivo de nube.</p>
                 </div>
                 <div style="display: flex; gap: 12px;">
-                    <button class="logout-btn-header" style="background: white; border: 1px solid #e2e8f0;" onclick="app.logout()">SALIR</button>
+                    <button class="logout-btn-header" onclick="app.logout()">SALIR</button>
                 </div>
             </div>
 
@@ -962,17 +962,17 @@ const app = {
       const noPhotoCount = (state.employeesList || []).filter(e => !e.photo).length;
 
       return `
-        <header class="fade-in" style="margin-bottom: 32px; display: flex; justify-content: space-between; align-items: center; background: white; padding: 24px; border-radius: 16px; border: 1px solid #e2e8f0;">
+        <header class="fade-in" style="margin-bottom: 32px; display: flex; justify-content: space-between; align-items: center;">
             <div>
-                <h1 style="font-family: 'Outfit', sans-serif; font-size: 1.8rem; font-weight: 800; color: #0369a1;">Panel Asistente de RRHH</h1>
-                <p style="color: #64748b; font-weight: 500;">Gestión operativa y soporte de auditoría.</p>
+                <h1 style="font-family: 'Outfit', sans-serif; font-size: 1.8rem; font-weight: 800; color: var(--primary);">Panel Asistente de RRHH</h1>
+                <p style="color: var(--text-muted); font-weight: 500;">Gestión operativa y soporte de auditoría.</p>
             </div>
             <div style="display: flex; align-items: center; gap: 16px;">
-                 <div style="background: #f0f9ff; padding: 8px 16px; border-radius: 10px; border: 1px solid #bae6fd; text-align: right;">
-                     <p style="font-size: 0.6rem; color: #0369a1; font-weight: 800; text-transform: uppercase;">Estado Sesión</p>
-                     <p style="font-size: 0.85rem; color: #0c4a6e; font-weight: 700;">Asistente Autorizado</p>
+                 <div style="background: var(--primary-soft); padding: 8px 16px; border-radius: 10px; border: 1px solid rgba(0, 82, 255, 0.15); text-align: right;">
+                     <p style="font-size: 0.6rem; color: var(--primary); font-weight: 800; text-transform: uppercase;">Estado Sesión</p>
+                     <p style="font-size: 0.85rem; color: var(--text-main); font-weight: 700;">Asistente Autorizado</p>
                  </div>
-                 <button class="logout-btn-header" style="background: #f1f5f9; border: 1px solid #e2e8f0;" onclick="app.logout()">SALIR</button>
+                 <button class="logout-btn-header" onclick="app.logout()">SALIR</button>
             </div>
         </header>
 
@@ -1264,7 +1264,7 @@ const app = {
       const remainingWeeks = state.getWeeksByServiceYears(state.user.yearsOfService || 0);
       return `
         <header class="fade-in" style="margin-bottom: 32px;">
-            <h1 style="font-size: 1.8rem; font-weight: 800; color: #4f46e5;">Planificación Anual de Vacaciones</h1>
+            <h1 style="font-size: 1.8rem; font-weight: 800; color: var(--primary);">Planificación Anual de Vacaciones</h1>
             <p style="color: var(--text-muted); font-weight: 500;">Planifique anticipadamente sus salidas para este año institucional.</p>
         </header>
 
@@ -1328,7 +1328,7 @@ const app = {
 
             <div style="display: flex; justify-content: flex-end; gap: 16px;">
                 <button type="button" class="btn" onclick="app.navigate('dashboard', event)">Cancelar</button>
-                <button type="submit" class="btn btn-primary" style="background: #4f46e5; border: none; padding: 12px 32px;">Enviar Planificación Oficial</button>
+                <button type="submit" class="btn btn-primary" style="padding: 12px 32px;">Enviar Planificación Oficial</button>
             </div>
         </form>
       `;
