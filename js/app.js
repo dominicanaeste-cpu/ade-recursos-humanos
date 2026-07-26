@@ -167,7 +167,13 @@ const app = {
                         <h1 style="font-size: 1.8rem; font-weight: 800; color: var(--primary);">Bienvenido, ${(state.user.name || 'Usuario').split(' ')[0]}</h1>
                         <p style="color: var(--text-muted); font-weight: 500;">Aquí tienes un resumen de tus solicitudes.</p>
                     </div>
-                    <div style="display: flex; gap: 10px;">
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        ${(state.user && (state.user.supervisorDept === 'Presidencia' || state.user.supervisorDept === 'Secretaría' || (state.user.permissions && (state.user.permissions.includes('hr') || state.user.permissions.includes('manager'))))) ? `
+                            <button class="btn" style="background: #334155; color: white; font-weight: 800; font-size: 0.8rem; padding: 8px 14px; display: flex; align-items: center; gap: 6px;" onclick="app.toggleSupervisorsEditor()">
+                                <span class="material-symbols-outlined" style="font-size: 1.1rem;">manage_accounts</span>
+                                ⚙️ ROLES E INSTITUCIONALES
+                            </button>
+                        ` : ''}
                         <button class="btn" style="background: white; border: 1.5px solid #e2e8f0; color: var(--text-muted); padding: 8px 12px; font-weight: 700; font-size: 0.75rem;" onclick="app.showChangePinModal()">
                             <span class="material-symbols-outlined" style="font-size: 1.1rem;">lock_reset</span> Cambiar PIN
                         </button>

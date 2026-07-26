@@ -444,10 +444,21 @@ const state = {
 
     // Escuchar Supervisores
     this.db.collection('settings').doc('supervisors').onSnapshot(doc => {
-        if (doc.exists) {
-            this.supervisors = doc.data().list || this.supervisors;
+        const defaults = {
+          'Presidencia': { name: 'Geuris Dencil Paulino', email: 'gdpaulino@gmail.com', password: 'presidencia123', pin: 'presidencia123', token: 'token-presidencia', supervisorDept: 'Presidencia' },
+          'Secretaría': { name: 'Junior Feliz', email: 'prjuniorfeliz@gmail.com', password: 'secretaria123', pin: 'secretaria123', token: 'token-secretaria', supervisorDept: 'Secretaría' },
+          'Tesorería': { name: 'Leidy Martínez', email: 'leidymartinez988@gmail.com', password: 'tesoreria123', pin: 'tesoreria123', token: 'token-tesoreria', supervisorDept: 'Tesorería' },
+          'RRHH': { name: 'Director de Recursos Humanos', email: 'dominicanaeste@gmail.com', password: 'rrhh123', pin: 'rrhh123', token: 'token-rrhh', supervisorDept: 'RRHH' },
+          'Asistente_RRHH': { name: 'Ana Mercedes', email: 'asistenterrhh@ade.com', password: 'asistente123', pin: 'asistente123', token: 'token-asistente', supervisorDept: 'RRHH' }
+        };
+
+        if (doc.exists && doc.data() && doc.data().list) {
+            this.supervisors = Object.assign({}, defaults, doc.data().list);
         } else {
-            this.db.collection('settings').doc('supervisors').set({ list: this.supervisors });
+            this.supervisors = defaults;
+            if (this.db) {
+                this.db.collection('settings').doc('supervisors').set({ list: defaults });
+            }
         }
         if (typeof app !== 'undefined') {
             app.render();
