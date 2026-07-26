@@ -3,10 +3,11 @@ const state = {
   db: null,
   // Configuración de Cuentas Institucionales
   supervisors: {
-    'Presidencia': { name: 'Geuris Dencil Paulino', email: 'gdpaulino@gmail.com', password: 'presidencia123', token: 'token-presidencia', supervisorDept: 'Presidencia' },
-    'Secretaría': { name: 'Junior Feliz', email: 'prjuniorfeliz@gmail.com', password: 'secretaria123', token: 'token-secretaria', supervisorDept: 'Secretaría' },
-    'Tesorería': { name: 'Leidy Martínez', email: 'leidymartinez988@gmail.com', password: 'tesoreria123', token: 'token-tesoreria', supervisorDept: 'Tesorería' },
-    'RRHH': { name: 'Recursos Humanos', email: 'dominicanaeste@gmail.com', password: 'rrhh123', token: 'token-rrhh', supervisorDept: 'RRHH' }
+    'Presidencia': { name: 'Geuris Dencil Paulino', email: 'gdpaulino@gmail.com', password: 'presidencia123', pin: 'presidencia123', token: 'token-presidencia', supervisorDept: 'Presidencia' },
+    'Secretaría': { name: 'Junior Feliz', email: 'prjuniorfeliz@gmail.com', password: 'secretaria123', pin: 'secretaria123', token: 'token-secretaria', supervisorDept: 'Secretaría' },
+    'Tesorería': { name: 'Leidy Martínez', email: 'leidymartinez988@gmail.com', password: 'tesoreria123', pin: 'tesoreria123', token: 'token-tesoreria', supervisorDept: 'Tesorería' },
+    'RRHH': { name: 'Director de Recursos Humanos', email: 'dominicanaeste@gmail.com', password: 'rrhh123', pin: 'rrhh123', token: 'token-rrhh', supervisorDept: 'RRHH' },
+    'Asistente_RRHH': { name: 'Ana Mercedes', email: 'asistenterrhh@ade.com', password: 'asistente123', pin: 'asistente123', token: 'token-asistente', supervisorDept: 'RRHH' }
   },
 
   holidays: {
@@ -116,20 +117,34 @@ const state = {
   },
 
   async authenticate(username, password) {
-    // Limpiamos el username ingresado (quitar espacios y a minúsculas)
     const loginUser = username.trim().toLowerCase().replace(/\s+/g, '');
 
-    // 1. Validación Institucional por Nombre (Primer Nombre + Primer Apellido) o Email
+    // 1. Verificar si coincide con algún supervisor/rol institucional por nombre, email o slug
+    let matchedDept = null;
+    let matchedSup = null;
+
+    for (const [deptKey, sup] of Object.entries(this.supervisors || {})) {
+        const supNameSlug = (sup.name || "").toLowerCase().replace(/\s+/g, '');
+        const supEmail = (sup.email || "").toLowerCase();
+        const deptSlug = deptKey.toLowerCase().replace(/\s+/g, '');
+
+        if (loginUser === supNameSlug || username.toLowerCase() === supEmail || loginUser === deptSlug) {
+            if (password === sup.password || password === sup.pin) {
+                matchedDept = deptKey;
+                matchedSup = sup;
+                break;
+            }
+        }
+    }
+
+    // 2. Validación Institucional por catálogo de empleados (Nombre o Email)
     const emp = this.employeesList.find(e => {
-        const pinMatch = (e.pin === password);
+        const empPin = (e.pin || "").toString();
+        const pinMatch = (empPin === password);
         
-        // Generar "Slug" del nombre real: Ej "Juan Francisco Morillo" -> "juanmorillo"
         const nameParts = (e.name || "").trim().split(/\s+/);
-        // El primer apellido suele ser la tercera parte si hay dos nombres, o la segunda si hay uno.
-        // Simplificación: Buscamos el primer nombre y el primer apellido real (asumiendo formato estándar)
-        // Pero para ser SEGUROS con el usuario, comparamos el slug de sus dos primeras palabras significativas
         const firstName = nameParts[0] || "";
-        const firstSurname = nameParts[2] || nameParts[1] || ""; // Si hay 2 nombres, el apellido es el 3ro.
+        const firstSurname = nameParts[2] || nameParts[1] || "";
         const slug = (firstName + firstSurname).toLowerCase();
 
         const userMatch = (
@@ -137,35 +152,70 @@ const state = {
             (e.name && e.name.toLowerCase().replace(/\s+/g, '') === loginUser) ||
             (e.email && e.email.toLowerCase() === username.toLowerCase())
         );
-        return pinMatch && userMatch;
+
+        // También permitir el PIN institucional si el usuario seleccionó un rol
+        let supPinMatch = false;
+        for (const sup of Object.values(this.supervisors || {})) {
+            if ((sup.name && sup.name.toLowerCase().replace(/\s+/g, '') === slug) || (e.email && sup.email && e.email.toLowerCase() === sup.email.toLowerCase())) {
+                if (password === sup.password || password === sup.pin) supPinMatch = true;
+            }
+        }
+
+        return (pinMatch || supPinMatch) && userMatch;
     });
 
     if (emp) {
-        // Asignación de Roles Institucionales (Poderes Especiales)
+        // Determinación dinámica de roles y permisos
         let role = 'employee';
         let permissions = [];
-        let supervisorDept = emp.cat;
+        let supervisorDept = emp.cat || emp.department || 'General';
         let empSupervisor = emp.cat;
 
-        if (emp.id === "17") { // Junior Feliz: Secretaría + RRHH
-            role = 'manager';
-            permissions = ['manager', 'hr'];
-            supervisorDept = 'Secretaría';
-            empSupervisor = 'Presidencia'; // Solicita autorización al Presidente
-        } else if (emp.id === "42") { // Geuris Paulino: Presidencia
-            role = 'manager';
-            permissions = ['manager'];
-            supervisorDept = 'Presidencia';
-            empSupervisor = 'Tesorería'; // Solicita autorización a la Tesorera (Control de Auditoría)
-        } else if (emp.id === "35") { // Leidy Martinez: Tesorería
-            role = 'manager';
-            permissions = ['manager'];
-            supervisorDept = 'Tesorería';
-            empSupervisor = 'Presidencia'; // Solicita autorización al Presidente
-        } else if (emp.id === "23") { // Ana Mercedes: Asistente RRHH
-            role = 'assistant';
-            permissions = ['assistant'];
-            supervisorDept = 'RRHH';
+        // Comprobar si el empleado ostenta algún puesto institucional en supervisors
+        for (const [deptKey, sup] of Object.entries(this.supervisors || {})) {
+            const isEmpMatch = (sup.employeeId && sup.employeeId == emp.id) ||
+                (sup.email && emp.email && sup.email.toLowerCase() === emp.email.toLowerCase()) ||
+                (sup.name && emp.name && sup.name.trim().toLowerCase() === emp.name.trim().toLowerCase());
+            
+            if (isEmpMatch) {
+                if (deptKey === 'Presidencia') {
+                    role = 'manager';
+                    if (!permissions.includes('manager')) permissions.push('manager');
+                    supervisorDept = 'Presidencia';
+                    empSupervisor = 'Tesorería';
+                } else if (deptKey === 'Secretaría') {
+                    role = 'manager';
+                    if (!permissions.includes('manager')) permissions.push('manager');
+                    supervisorDept = 'Secretaría';
+                    empSupervisor = 'Presidencia';
+                } else if (deptKey === 'Tesorería') {
+                    role = 'manager';
+                    if (!permissions.includes('manager')) permissions.push('manager');
+                    supervisorDept = 'Tesorería';
+                    empSupervisor = 'Presidencia';
+                } else if (deptKey === 'RRHH') {
+                    if (role === 'employee') role = 'hr';
+                    if (!permissions.includes('hr')) permissions.push('hr');
+                    if (supervisorDept === emp.cat) supervisorDept = 'RRHH';
+                } else if (deptKey === 'Asistente_RRHH' || deptKey === 'Asistente RRHH') {
+                    if (role === 'employee') role = 'assistant';
+                    if (!permissions.includes('assistant')) permissions.push('assistant');
+                    if (supervisorDept === emp.cat) supervisorDept = 'RRHH';
+                }
+            }
+        }
+
+        // Fallbacks históricos de compatibilidad si aún no está asignado explícitamente en supervisors
+        if (permissions.length === 0) {
+            if (emp.id === "42") { // Geuris Paulino
+                role = 'manager'; permissions = ['manager']; supervisorDept = 'Presidencia'; empSupervisor = 'Tesorería';
+            } else if (emp.id === "17") { // Junior Feliz: Secretaría (¡Separado de RRHH!)
+                role = 'manager'; permissions = ['manager']; supervisorDept = 'Secretaría'; empSupervisor = 'Presidencia';
+            } else if (emp.id === "35") { // Leidy Martinez
+                role = 'manager'; permissions = ['manager']; supervisorDept = 'Tesorería'; empSupervisor = 'Presidencia';
+            } else if (emp.id === "23") { // Ana Mercedes
+                role = 'assistant'; permissions = ['assistant']; supervisorDept = 'RRHH';
+            }
         }
 
         this.user = {
@@ -178,14 +228,13 @@ const state = {
             supervisor: empSupervisor, 
             supervisorDept: supervisorDept, 
             yearsOfService: emp.years,
-            evangelismoDays: 0, // Fallback
+            evangelismoDays: 0,
             remainingWeeks: this.getWeeksByServiceYears(emp.years),
             remainingDays: this.getWeeksByServiceYears(emp.years) * 7,
             fullWeeksPerYear: this.getWeeksByServiceYears(emp.years),
             photo: null
         };
         
-        // 90. Cargar datos persistentes de Firestore si existen
         if (this.db) {
             try {
                 const empRef = this.db.collection('employees').doc(emp.id);
@@ -205,25 +254,31 @@ const state = {
         return this.user;
     }
 
-    // 2. Si no es un usuario del Excel, probar con los mocks originales
-    const supervisor = this.supervisors[username] || Object.values(this.supervisors).find(s => s.email === username);
-    if (supervisor && (password === supervisor.password || password === supervisor.pin)) {
-        const isHR = username === 'dominicanaeste@gmail.com' || supervisor.email === 'dominicanaeste@gmail.com';
+    // 3. Si no es un usuario del catálogo Excel pero coincide con un supervisor institucional directo
+    if (matchedSup) {
+        const isHR = matchedDept === 'RRHH';
+        const isAssistant = matchedDept === 'Asistente_RRHH' || matchedDept === 'Asistente RRHH';
+        const role = isHR ? 'hr' : (isAssistant ? 'assistant' : 'manager');
+        const perm = isHR ? ['hr'] : (isAssistant ? ['assistant'] : ['manager']);
+
         this.user = {
-            ...supervisor,
-            role: isHR ? 'hr' : 'manager',
-            permissions: isHR ? ['hr'] : ['manager'],
-            remainingDays: supervisor.remainingDays || 0,
-            remainingWeeks: supervisor.remainingWeeks || 0,
-            fullWeeksPerYear: supervisor.fullWeeksPerYear || 0,
-            yearsOfService: supervisor.yearsOfService || 0,
-            position: supervisor.position || (isHR ? 'Recursos Humanos' : 'Director')
+            id: matchedSup.token || `sup_${matchedDept.toLowerCase()}`,
+            name: matchedSup.name,
+            email: matchedSup.email,
+            role: role,
+            permissions: perm,
+            supervisorDept: matchedSup.supervisorDept || (isHR || isAssistant ? 'RRHH' : matchedDept),
+            remainingDays: 28,
+            remainingWeeks: 4,
+            fullWeeksPerYear: 4,
+            yearsOfService: 10,
+            position: matchedDept
         };
         this.saveSession();
         return this.user;
     }
     
-    // 3. Empleado de prueba genérico
+    // 4. Empleado de prueba genérico
     if (username === "empleado@ade.com" && password === "123") {
       this.user = { id: 'emp_001', name: "Oficial de Prueba ADE", role: 'employee', remainingDays: 15, remainingWeeks: 3, yearsOfService: 10, position: 'Personal DeOficina', supervisor: 'Secretaría' };
       this.saveSession();
@@ -707,7 +762,38 @@ const state = {
 
   async updateSupervisors(newList) {
     this.supervisors = newList;
-    await this.db.collection('settings').doc('supervisors').set({ list: newList });
+    if (this.db) {
+      await this.db.collection('settings').doc('supervisors').set({ list: newList });
+      
+      // Actualizar los datos de empleado asociados a cada rol
+      for (const [deptKey, sup] of Object.entries(newList)) {
+        if (!sup) continue;
+        let empToUpdate = null;
+        if (sup.employeeId) {
+            empToUpdate = this.employeesList.find(e => e.id == sup.employeeId);
+        } else if (sup.email) {
+            empToUpdate = this.employeesList.find(e => e.email && e.email.toLowerCase() === sup.email.toLowerCase());
+        } else if (sup.name) {
+            empToUpdate = this.employeesList.find(e => e.name && e.name.trim().toLowerCase() === sup.name.trim().toLowerCase());
+        }
+        
+        if (empToUpdate) {
+            const updates = {};
+            if (sup.email && sup.email !== empToUpdate.email) updates.email = sup.email;
+            if (sup.pin && sup.pin !== empToUpdate.pin) updates.pin = sup.pin;
+            
+            if (Object.keys(updates).length > 0) {
+                try {
+                    await this.db.collection('employees').doc(empToUpdate.id.toString()).update(updates);
+                    Object.assign(empToUpdate, updates);
+                    console.log(`✅ Empleado ${empToUpdate.name} actualizado con nuevo correo/PIN.`);
+                } catch(e) {
+                    console.warn(`Error actualizando empleado ${empToUpdate.id}:`, e);
+                }
+            }
+        }
+      }
+    }
   },
 
   // 📝 GESTIÓN DE PERSONAL (CRUD NUBE)

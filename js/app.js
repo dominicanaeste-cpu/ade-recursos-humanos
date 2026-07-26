@@ -67,11 +67,14 @@ const app = {
   },
 
   // Datos institucionales para la simulación
-  supervisorEmails: {
-    'Presidencia': 'gdpaulino@gmail.com',
-    'Secretaría': 'prjuniorfeliz@gmail.com',
-    'Tesorería': 'leidymartinez988@gmail.com',
-    'RRHH': 'dominicanaeste@gmail.com'
+  get supervisorEmails() {
+    return {
+      'Presidencia': (state.supervisors && state.supervisors['Presidencia'] && state.supervisors['Presidencia'].email) ? state.supervisors['Presidencia'].email : 'gdpaulino@gmail.com',
+      'Secretaría': (state.supervisors && state.supervisors['Secretaría'] && state.supervisors['Secretaría'].email) ? state.supervisors['Secretaría'].email : 'prjuniorfeliz@gmail.com',
+      'Tesorería': (state.supervisors && state.supervisors['Tesorería'] && state.supervisors['Tesorería'].email) ? state.supervisors['Tesorería'].email : 'leidymartinez988@gmail.com',
+      'RRHH': (state.supervisors && state.supervisors['RRHH'] && state.supervisors['RRHH'].email) ? state.supervisors['RRHH'].email : 'dominicanaeste@gmail.com',
+      'Asistente_RRHH': (state.supervisors && state.supervisors['Asistente_RRHH'] && state.supervisors['Asistente_RRHH'].email) ? state.supervisors['Asistente_RRHH'].email : 'asistenterrhh@ade.com'
+    };
   },
 
   views: {
@@ -447,6 +450,12 @@ const app = {
                         <p style="color: var(--text-muted); font-weight: 500;">Gestión de solicitudes para: <span style="color: var(--secondary); font-weight: 800;">${roleName.toUpperCase()}</span></p>
                     </div>
                     <div style="display: flex; gap: 12px; align-items: center;">
+                        ${(state.user.supervisorDept === 'Presidencia' || state.user.supervisorDept === 'Secretaría' || (state.user.permissions && state.user.permissions.includes('hr'))) ? `
+                            <button class="btn" style="background: #334155; color: white; font-weight: 800; display: flex; align-items: center; gap: 6px;" onclick="app.toggleSupervisorsEditor()">
+                                <span class="material-symbols-outlined" style="font-size: 1.1rem;">manage_accounts</span>
+                                ⚙️ ROLES E INSTITUCIONALES
+                            </button>
+                        ` : ''}
                         ${state.user.permissions.includes('hr') ? `
                             <button class="btn" style="background: #166534; color: white;" onclick="app.exportAuditPDF(2026)">
                                 <span class="material-symbols-outlined">description</span>
@@ -1724,7 +1733,21 @@ const app = {
   },
 
   sendInstitutionalEmail: function(to, data) {
-    const roleParam = to.includes('gdpaulino') ? 'Presidencia' : (to.includes('prjunior') ? 'Secretaría' : (to.includes('leidymartinez') ? 'Tesorería' : (to.includes('dominicanaeste') ? 'RRHH' : 'employee')));
+    let roleParam = 'employee';
+    if (state.supervisors) {
+      for (const [deptKey, sup] of Object.entries(state.supervisors)) {
+        if (sup && sup.email && to && to.toLowerCase() === sup.email.toLowerCase()) {
+          roleParam = deptKey;
+          break;
+        }
+      }
+    }
+    if (roleParam === 'employee') {
+      if (to.includes('gdpaulino')) roleParam = 'Presidencia';
+      else if (to.includes('prjunior')) roleParam = 'Secretaría';
+      else if (to.includes('leidymartinez')) roleParam = 'Tesorería';
+      else if (to.includes('dominicanaeste')) roleParam = 'RRHH';
+    }
     const deepLink = `${location.origin}${location.pathname}?role=${roleParam}`;
 
     // --- ENVÍO REAL (EmailJS dinámico) ---
@@ -2383,28 +2406,69 @@ const app = {
       }
     }
 
+    const roleDefinitions = [
+      { key: 'Presidencia', label: '👑 Presidencia (Presidente)' },
+      { key: 'Secretaría', label: '📜 Secretaría (Secretario)' },
+      { key: 'Tesorería', label: '💰 Tesorería (Tesorero)' },
+      { key: 'RRHH', label: '👥 Director de Recursos Humanos (RRHH)' },
+      { key: 'Asistente_RRHH', label: '📋 Asistente de Recursos Humanos' }
+    ];
+
     let html = `
-      <div class="card fade-in glass" style="width: 500px; max-width: 90%; background: white; border-radius: 16px; padding: 32px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto;">
-        <h2 style="font-size: 1.5rem; color: var(--primary); margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
-          <span class="material-symbols-outlined">manage_accounts</span> Configurar Responsables
-        </h2>
-        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 24px;">Modifique los correos y nombres de los responsables departamentales que autorizan las solicitudes y de Recursos Humanos.</p>
+      <div class="card fade-in glass" style="width: 650px; max-width: 95%; background: white; border-radius: 20px; padding: 32px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.3); max-height: 90vh; display: flex; flex-direction: column;">
+        <div style="margin-bottom: 20px; border-bottom: 2px solid #f1f5f9; padding-bottom: 16px;">
+          <h2 style="font-size: 1.5rem; color: var(--primary); font-weight: 800; margin: 0 0 6px 0; display: flex; align-items: center; gap: 10px;">
+            <span class="material-symbols-outlined" style="font-size: 1.8rem; color: var(--secondary);">manage_accounts</span>
+            Asignación de Roles y Accesos Institucionales
+          </h2>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0; line-height: 1.4;">
+            Asigne la persona responsable, correo electrónico para notificaciones y PIN de acceso para cada puesto clave.
+          </p>
+        </div>
         
-        <div style="display: flex; flex-direction: column; gap: 16px; margin-bottom: 24px;">
+        <div style="flex: 1; overflow-y: auto; padding-right: 6px; display: flex; flex-direction: column; gap: 20px; margin-bottom: 24px;">
     `;
 
-    for (const [dept, data] of Object.entries(state.supervisors || {})) {
+    for (const def of roleDefinitions) {
+        const dept = def.key;
+        const data = (state.supervisors && state.supervisors[dept]) ? state.supervisors[dept] : { name: '', email: '', pin: '', password: '' };
+        
+        // Opciones de empleados
+        let empOptionsHtml = `<option value="">-- Seleccionar Colaborador del Catálogo --</option>`;
+        (state.employeesList || []).forEach(emp => {
+            const isSelected = (data.employeeId && data.employeeId == emp.id) || (data.name && emp.name && data.name.trim().toLowerCase() === emp.name.trim().toLowerCase());
+            empOptionsHtml += `<option value="${emp.id}" ${isSelected ? 'selected' : ''}>${emp.name} (${emp.position || emp.cat || 'Empleado'})</option>`;
+        });
+
         html += `
-          <div style="background: #f8fafc; padding: 16px; border-radius: 12px; border: 1px solid #e2e8f0;">
-             <h3 style="font-size: 1rem; color: #0f172a; margin-bottom: 12px;">Departamento: ${dept}</h3>
-             <div style="display: flex; flex-direction: column; gap: 12px;">
+          <div style="background: #f8fafc; padding: 20px; border-radius: 14px; border: 1.5px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                <h3 style="font-size: 1.05rem; font-weight: 800; color: var(--primary); margin: 0;">${def.label}</h3>
+                <span class="badge" style="background: #e0f2fe; color: #0369a1; font-weight: 700; font-size: 0.7rem;">PUESTO OFICIAL</span>
+             </div>
+             
+             <div style="display: flex; flex-direction: column; gap: 14px;">
                 <div>
-                   <label style="display: block; font-size: 0.75rem; font-weight: 700; color: #64748b; margin-bottom: 4px;">Nombre del Responsable</label>
-                   <input type="text" id="sup_name_${dept}" value="${data.name}" style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none; font-family: inherit;">
+                   <label style="display: block; font-size: 0.75rem; font-weight: 800; color: #475569; margin-bottom: 4px;">Asignar Colaborador de la ADE</label>
+                   <select id="sup_emp_${dept}" onchange="app.onSupervisorEmpSelect('${dept}')" style="width: 100%; padding: 10px 14px; border: 1.5px solid #cbd5e1; border-radius: 8px; font-family: inherit; font-size: 0.85rem; background: white;">
+                      ${empOptionsHtml}
+                   </select>
                 </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                   <div>
+                      <label style="display: block; font-size: 0.75rem; font-weight: 800; color: #475569; margin-bottom: 4px;">Nombre Completo</label>
+                      <input type="text" id="sup_name_${dept}" value="${data.name || ''}" placeholder="Ej. Juan Pérez" style="width: 100%; padding: 10px 14px; border: 1.5px solid #cbd5e1; border-radius: 8px; font-family: inherit; font-size: 0.85rem; background: white;">
+                   </div>
+                   <div>
+                      <label style="display: block; font-size: 0.75rem; font-weight: 800; color: #475569; margin-bottom: 4px;">PIN de Acceso</label>
+                      <input type="text" id="sup_pin_${dept}" value="${data.pin || data.password || ''}" placeholder="PIN de 4 dígitos" style="width: 100%; padding: 10px 14px; border: 1.5px solid #cbd5e1; border-radius: 8px; font-family: inherit; font-size: 0.85rem; background: white; font-weight: 700; color: #1e293b;">
+                   </div>
+                </div>
+
                 <div>
-                   <label style="display: block; font-size: 0.75rem; font-weight: 700; color: #64748b; margin-bottom: 4px;">Correo Institucional</label>
-                   <input type="email" id="sup_email_${dept}" value="${data.email}" style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none; font-family: inherit;">
+                   <label style="display: block; font-size: 0.75rem; font-weight: 800; color: #475569; margin-bottom: 4px;">Correo Institucional (para notificaciones y firma)</label>
+                   <input type="email" id="sup_email_${dept}" value="${data.email || ''}" placeholder="correo@ade.com" style="width: 100%; padding: 10px 14px; border: 1.5px solid #cbd5e1; border-radius: 8px; font-family: inherit; font-size: 0.85rem; background: white;">
                 </div>
              </div>
           </div>
@@ -2413,9 +2477,9 @@ const app = {
 
     html += `
         </div>
-        <div style="display: flex; gap: 12px; justify-content: flex-end;">
-            <button class="btn" onclick="document.getElementById('supervisors_editor_modal').style.display='none'" style="background: #f1f5f9; color: #475569; font-weight: 700;">Cancelar</button>
-            <button class="btn" id="btn_save_supervisors" onclick="app.saveSupervisorsConfig()" style="background: var(--primary); color: white; font-weight: 700;">Guardar Cambios</button>
+        <div style="display: flex; gap: 12px; justify-content: flex-end; pt-3; border-top: 1px solid #e2e8f0;">
+            <button class="btn" onclick="document.getElementById('supervisors_editor_modal').style.display='none'" style="background: #f1f5f9; color: #475569; font-weight: 700; padding: 12px 20px;">Cancelar</button>
+            <button class="btn" id="btn_save_supervisors" onclick="app.saveSupervisorsConfig()" style="background: var(--primary); color: white; font-weight: 800; padding: 12px 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">💾 Guardar Cambios</button>
         </div>
       </div>
     `;
@@ -2423,19 +2487,53 @@ const app = {
     modal.style.display = 'flex';
   },
 
+  onSupervisorEmpSelect: function(dept) {
+    const sel = document.getElementById('sup_emp_' + dept);
+    if (!sel || !sel.value) return;
+    const emp = state.employeesList.find(e => e.id == sel.value);
+    if (emp) {
+      const nameInp = document.getElementById('sup_name_' + dept);
+      const emailInp = document.getElementById('sup_email_' + dept);
+      const pinInp = document.getElementById('sup_pin_' + dept);
+      if (nameInp) nameInp.value = emp.name || '';
+      if (emailInp) emailInp.value = emp.email || '';
+      if (pinInp) pinInp.value = emp.pin || emp.id.toString().padStart(4, '0');
+    }
+  },
+
   saveSupervisorsConfig: async function() {
     const btn = document.getElementById('btn_save_supervisors');
     if (btn) { btn.disabled = true; btn.innerText = "Guardando..."; }
-    let newSups = JSON.parse(JSON.stringify(state.supervisors));
-    for (const dept of Object.keys(newSups)) {
+    let newSups = JSON.parse(JSON.stringify(state.supervisors || {}));
+    
+    const roleKeys = ['Presidencia', 'Secretaría', 'Tesorería', 'RRHH', 'Asistente_RRHH'];
+    for (const dept of roleKeys) {
+       if (!newSups[dept]) {
+         newSups[dept] = { supervisorDept: (dept.includes('RRHH') ? 'RRHH' : dept) };
+       }
        const nameInput = document.getElementById('sup_name_' + dept);
        const emailInput = document.getElementById('sup_email_' + dept);
-       if (nameInput) newSups[dept].name = nameInput.value.trim();
-       if (emailInput) newSups[dept].email = emailInput.value.trim();
+       const pinInput = document.getElementById('sup_pin_' + dept);
+       const empSelect = document.getElementById('sup_emp_' + dept);
+
+       if (nameInput && nameInput.value.trim()) newSups[dept].name = nameInput.value.trim();
+       if (emailInput && emailInput.value.trim()) newSups[dept].email = emailInput.value.trim();
+       if (pinInput && pinInput.value.trim()) {
+         newSups[dept].pin = pinInput.value.trim();
+         newSups[dept].password = pinInput.value.trim();
+       }
+       if (empSelect && empSelect.value) {
+         newSups[dept].employeeId = empSelect.value;
+       }
+       newSups[dept].supervisorDept = (dept.includes('RRHH') ? 'RRHH' : dept);
+       newSups[dept].token = newSups[dept].token || `token-${dept.toLowerCase()}`;
     }
+    
     await state.updateSupervisors(newSups);
-    document.getElementById('supervisors_editor_modal').style.display = 'none';
-    app.render();
+    this.showToast("✅ Configuración de Roles y PINs actualizada exitosamente");
+    const modal = document.getElementById('supervisors_editor_modal');
+    if (modal) modal.style.display = 'none';
+    this.render();
   },
 
 
