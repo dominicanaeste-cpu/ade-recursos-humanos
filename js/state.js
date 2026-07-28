@@ -819,6 +819,49 @@ const state = {
     console.log(`✅ Empleado ${id} guardado en la nube.`);
   },
 
+  async bulkSaveEmployees(empList) {
+    if (!this.db || !Array.isArray(empList) || empList.length === 0) return 0;
+    
+    const batch = this.db.batch();
+    let count = 0;
+    
+    for (const empData of empList) {
+        if (!empData.name && !empData.nombres && !empData.apellidos && !empData.GivenNames && !empData.SurName) continue;
+        
+        const id = (empData.id || empData.NumberEmployee || empData.ID || String(Date.now() + count)).toString();
+        const fullName = empData.name || `${empData.nombres || empData.GivenNames || ''} ${empData.apellidos || empData.SurName || ''}`.trim();
+        const years = parseInt(empData.years || empData.yearsOfService || empData['Años de Servicio'] || empData.AñosDeServicio || empData.Años) || 0;
+        
+        const docRef = this.db.collection('employees').doc(id);
+        const dataToSave = {
+            id: id,
+            name: fullName,
+            position: empData.position || empData.cat || empData['Cargo / Posición'] || empData.Posición || empData.Cargo || 'Empleado',
+            cat: empData.cat || empData.department || empData['Departamento / Categoría'] || empData.Departamento || 'General',
+            years: years,
+            email: empData.email || empData['Correo Electrónico'] || empData.Correo || '',
+            pin: (empData.pin || empData['PIN de Acceso'] || empData.PIN || id.padStart(4, '0')).toString(),
+            remainingDays: (empData.remainingDays !== undefined && empData.remainingDays !== '') ? parseInt(empData.remainingDays) : (this.getWeeksByServiceYears(years) * 7),
+            evangelismoDays: (empData.evangelismoDays !== undefined && empData.evangelismoDays !== '') ? parseInt(empData.evangelismoDays) : 0,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        batch.set(docRef, dataToSave, { merge: true });
+        
+        const idx = this.employeesList.findIndex(e => e.id == id);
+        if (idx !== -1) {
+            Object.assign(this.employeesList[idx], dataToSave);
+        } else {
+            this.employeesList.push(dataToSave);
+        }
+        count++;
+    }
+    
+    await batch.commit();
+    console.log(`✅ ${count} empleados procesados e importados en lote a Firestore.`);
+    return count;
+  },
+
   async deleteEmployee(id) {
     if (!this.db) return;
     await this.db.collection('employees').doc(id).delete();

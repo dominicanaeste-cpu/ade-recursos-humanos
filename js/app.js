@@ -461,6 +461,10 @@ const app = {
                                 <span class="material-symbols-outlined" style="font-size: 1.1rem;">manage_accounts</span>
                                 ⚙️ ROLES E INSTITUCIONALES
                             </button>
+                            <button class="btn" style="background: #166534; color: white; font-weight: 800; display: flex; align-items: center; gap: 6px;" onclick="app.showExcelImportModal()">
+                                <span class="material-symbols-outlined" style="font-size: 1.1rem;">table_chart</span>
+                                📊 PLANTILLA EXCEL
+                            </button>
                         ` : ''}
                         ${state.user.permissions.includes('hr') ? `
                             <button class="btn" style="background: #166534; color: white;" onclick="app.exportAuditPDF(2026)">
@@ -697,6 +701,9 @@ const app = {
                     <button class="btn" style="background: #fdf2f8; color: #be185d; height: 40px; font-weight: 800; display: flex; align-items: center; gap: 6px; position: relative;" onclick="app.manageEmployeePhotos('no')">
                         <span class="material-symbols-outlined" style="font-size: 1.1rem;">camera_enhance</span> FOTOS
                         ${noPhotoCount > 0 ? `<span style="background: #e11d48; color: white; font-size: 0.65rem; font-weight: 800; padding: 1px 6px; border-radius: 9999px; margin-left: 2px;">${noPhotoCount}</span>` : ''}
+                    </button>
+                    <button class="btn" style="background: #166534; color: white; height: 40px; font-weight: 800; display: flex; align-items: center; gap: 6px;" onclick="app.showExcelImportModal()">
+                        <span class="material-symbols-outlined" style="font-size: 1.1rem;">table_chart</span> 📊 PLANTILLA EXCEL
                     </button>
                     <button class="btn" style="background: #0ea5e9; color: white; height: 40px; font-weight: 800;" onclick="app.toggleEmployeeEditor()">👥 GESTIÓN DE PERSONAL</button>
                     <button class="btn" style="background: #1e293b; color: white; height: 40px; font-weight: 800;" onclick="app.togglePositionsEditor()">🛠️ ROLES</button>
@@ -982,7 +989,10 @@ const app = {
                 <h1 style="font-family: 'Outfit', sans-serif; font-size: 1.8rem; font-weight: 800; color: var(--primary);">Panel Asistente de RRHH</h1>
                 <p style="color: var(--text-muted); font-weight: 500;">Gestión operativa y soporte de auditoría.</p>
             </div>
-            <div style="display: flex; align-items: center; gap: 16px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                 <button class="btn" style="background: #166534; color: white; font-weight: 800; padding: 10px 18px; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(22, 101, 52, 0.2);" onclick="app.showExcelImportModal()">
+                     <span class="material-symbols-outlined" style="font-size: 1.1rem;">table_chart</span> 📊 PLANTILLA EXCEL
+                 </button>
                  <div style="background: var(--primary-soft); padding: 8px 16px; border-radius: 10px; border: 1px solid rgba(0, 82, 255, 0.15); text-align: right;">
                      <p style="font-size: 0.6rem; color: var(--primary); font-weight: 800; text-transform: uppercase;">Estado Sesión</p>
                      <p style="font-size: 0.85rem; color: var(--text-main); font-weight: 700;">Asistente Autorizado</p>
@@ -998,6 +1008,9 @@ const app = {
                     <span class="material-symbols-outlined">construction</span> Herramientas de Gestión
                 </h2>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <button class="btn" style="background: #166534; color: white; font-weight: 800; height: 60px; flex-direction: column; gap: 4px;" onclick="app.showExcelImportModal()">
+                        <span class="material-symbols-outlined" style="font-size: 1.2rem;">table_chart</span> Plantilla Excel
+                    </button>
                     <button class="btn" style="background: #f0f9ff; color: #0369a1; font-weight: 800; height: 60px; flex-direction: column; gap: 4px;" onclick="app.downloadAllApprovedPDFs()">
                         <span class="material-symbols-outlined" style="font-size: 1.2rem;">file_download</span> Bajar Todo
                     </button>
@@ -1007,9 +1020,6 @@ const app = {
                     </button>
                     <button class="btn" style="background: var(--primary); color: white; font-weight: 800; height: 60px; flex-direction: column; gap: 4px;" onclick="app.showGlobalCalendar()">
                         <span class="material-symbols-outlined" style="font-size: 1.2rem;">calendar_month</span> Calendario
-                    </button>
-                    <button class="btn" style="background: #fefce8; color: #854d0e; font-weight: 800; height: 60px; flex-direction: column; gap: 4px; border: 1px solid #fef08a;" onclick="app.downloadMedicalLeaves()">
-                        <span class="material-symbols-outlined" style="font-size: 1.2rem;">medical_services</span> Lic. Médicas
                     </button>
                 </div>
             </section>
@@ -2540,6 +2550,221 @@ const app = {
     const modal = document.getElementById('supervisors_editor_modal');
     if (modal) modal.style.display = 'none';
     this.render();
+  },
+
+  // 📊 GESTIÓN DE PLANTILLA E IMPORTACIÓN MASIVA EXCEL
+  pendingExcelRows: [],
+
+  showExcelImportModal: function() {
+    let modal = document.getElementById('excel_import_modal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'excel_import_modal';
+      modal.style.position = 'fixed';
+      modal.style.inset = '0';
+      modal.style.background = 'rgba(0,0,0,0.65)';
+      modal.style.zIndex = '55000';
+      modal.style.display = 'flex';
+      modal.style.alignItems = 'center';
+      modal.style.justifyContent = 'center';
+      modal.style.backdropFilter = 'blur(4px)';
+      document.body.appendChild(modal);
+    }
+
+    let html = `
+      <div class="card fade-in glass" style="width: 750px; max-width: 95%; background: white; border-radius: 20px; padding: 32px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.35); max-height: 90vh; display: flex; flex-direction: column;">
+        <div style="margin-bottom: 20px; border-bottom: 2px solid #f1f5f9; padding-bottom: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+          <div>
+            <h2 style="font-size: 1.4rem; color: var(--primary); font-weight: 800; margin: 0 0 4px 0; display: flex; align-items: center; gap: 10px;">
+              <span class="material-symbols-outlined" style="font-size: 1.8rem; color: #166534;">table_chart</span>
+              Plantilla Excel e Importación Masiva
+            </h2>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0;">Descargue la plantilla oficial o cargue su archivo Excel de colaboradores.</p>
+          </div>
+          <button class="btn" style="background: #166534; color: white; font-weight: 800; padding: 10px 16px; font-size: 0.8rem; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(22, 101, 52, 0.2);" onclick="app.downloadExcelTemplate()">
+            <span class="material-symbols-outlined" style="font-size: 1.1rem;">download</span>
+            Descargar Plantilla (.xlsx)
+          </button>
+        </div>
+
+        <div style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 20px;">
+          <!-- Drop Zone -->
+          <div id="excel_drop_zone" style="border: 2.5px dashed #0284c7; background: #f0f9ff; border-radius: 16px; padding: 32px; text-align: center; cursor: pointer; transition: all 0.2s ease;"
+               onclick="document.getElementById('excel_file_input').click()"
+               ondragover="event.preventDefault(); this.style.background='#e0f2fe';"
+               ondragleave="this.style.background='#f0f9ff';"
+               ondrop="app.handleExcelDrop(event)">
+            <span class="material-symbols-outlined" style="font-size: 3.2rem; color: #0284c7; margin-bottom: 12px;">upload_file</span>
+            <h3 style="font-size: 1.1rem; color: #0369a1; margin: 0 0 6px 0; font-weight: 800;">Arrastre su archivo Excel (.xlsx / .csv) aquí</h3>
+            <p style="font-size: 0.8rem; color: #64748b; margin: 0 0 16px 0;">o haga clic para seleccionar el archivo en su computadora</p>
+            <input type="file" id="excel_file_input" accept=".xlsx, .xls, .csv" style="display: none;" onchange="app.handleExcelFileUpload(event)">
+            <button class="btn" style="background: #0284c7; color: white; font-weight: 800; padding: 10px 20px; font-size: 0.85rem; border-radius: 10px;">Seleccionar Archivo Excel</button>
+          </div>
+
+          <!-- Preview Table -->
+          <div id="excel_preview_container" style="display: none; flex-direction: column; gap: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <h4 style="font-size: 0.95rem; font-weight: 800; color: var(--primary); margin: 0;" id="excel_preview_title">Registros Listos para Importar (0)</h4>
+              <span class="badge" style="background: #dcfce7; color: #15803d; font-weight: 800;">FORMATO VÁLIDO</span>
+            </div>
+            <div style="max-height: 250px; overflow-y: auto; border: 1px solid #cbd5e1; border-radius: 12px; background: white;">
+              <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem;">
+                <thead style="background: #f8fafc; border-bottom: 2px solid #e2e8f0; position: sticky; top: 0; z-index: 10;">
+                  <tr style="text-align: left; color: #475569;">
+                    <th style="padding: 10px;">ID</th>
+                    <th style="padding: 10px;">Nombre Completo</th>
+                    <th style="padding: 10px;">Cargo / Posición</th>
+                    <th style="padding: 10px; text-align: center;">Años Serv.</th>
+                    <th style="padding: 10px;">Correo</th>
+                    <th style="padding: 10px; text-align: center;">PIN</th>
+                  </tr>
+                </thead>
+                <tbody id="excel_preview_tbody">
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px; padding-top: 16px; border-top: 1px solid #e2e8f0;">
+          <button class="btn" onclick="document.getElementById('excel_import_modal').style.display='none'" style="background: #f1f5f9; color: #475569; font-weight: 700; padding: 12px 20px;">Cancelar</button>
+          <button class="btn" id="btn_confirm_excel_import" onclick="app.confirmExcelImport()" style="background: #166534; color: white; font-weight: 800; padding: 12px 24px; display: none; box-shadow: 0 4px 12px rgba(22, 101, 52, 0.3);">
+            💾 Confirmar e Importar a Firestore
+          </button>
+        </div>
+      </div>
+    `;
+
+    modal.innerHTML = html;
+    modal.style.display = 'flex';
+  },
+
+  downloadExcelTemplate: function() {
+    if (typeof XLSX !== 'undefined') {
+      const headers = ['ID', 'Nombres', 'Apellidos', 'Cargo / Posición', 'Departamento / Categoría', 'Años de Servicio', 'Correo Electrónico', 'PIN de Acceso', 'Días Restantes', 'Días Evangelismo'];
+      const rows = [
+        headers,
+        [1, 'MARCOS ANTONIO', 'ARIAS MERCEDES', 'Pastor', 'Pastoral', 0, 'marcos.arias@ade.com', '1001', 14, 0],
+        [2, 'ISMAEL', 'ASTACIO CHIRENO', 'Pastor', 'Pastoral', 7, 'ismael.astacio@ade.com', '1002', 21, 0],
+        [3, 'RAQUEL GIOVANNA', 'BASTARDO MATEO', 'Equipo de Finanzas', 'Finanzas', 34, 'raquel.bastardo@ade.com', '1003', 28, 0],
+        [17, 'Junior', 'Feliz', 'Secretario', 'Secretaría', 15, 'prjuniorfeliz@gmail.com', 'secretaria123', 28, 0],
+        [42, 'Geuris Dencil', 'Paulino', 'Presidente', 'Presidencia', 20, 'gdpaulino@gmail.com', 'presidencia123', 28, 0]
+      ];
+      const ws = XLSX.utils.aoa_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Plantilla Empleados ADE");
+      XLSX.writeFile(wb, "Plantilla_Empleados_ADE.xlsx");
+      this.showToast("📥 Plantilla Excel oficial descargada");
+    } else {
+      const a = document.createElement('a');
+      a.href = 'Plantilla_Empleados_ADE.xlsx';
+      a.download = 'Plantilla_Empleados_ADE.xlsx';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+  },
+
+  handleExcelDrop: function(e) {
+    e.preventDefault();
+    const dt = e.dataTransfer;
+    if (dt && dt.files && dt.files.length > 0) {
+      this.processExcelFile(dt.files[0]);
+    }
+  },
+
+  handleExcelFileUpload: function(e) {
+    if (e.target.files && e.target.files.length > 0) {
+      this.processExcelFile(e.target.files[0]);
+    }
+  },
+
+  processExcelFile: function(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        let rows = [];
+        if (typeof XLSX !== 'undefined') {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const firstSheet = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheet];
+          rows = XLSX.utils.sheet_to_json(worksheet);
+        } else {
+          alert("⚠️ La librería XLSX no está lista. Intente de nuevo o verifique su conexión.");
+          return;
+        }
+
+        if (!rows || rows.length === 0) {
+          alert("⚠️ No se encontraron registros de colaboradores en el archivo Excel proporcionado.");
+          return;
+        }
+
+        this.pendingExcelRows = rows;
+        this.renderExcelPreview(rows);
+      } catch (err) {
+        console.error("Error al procesar Excel:", err);
+        alert("⚠️ Error al procesar el archivo Excel: " + err.message);
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  },
+
+  renderExcelPreview: function(rows) {
+    const previewContainer = document.getElementById('excel_preview_container');
+    const tbody = document.getElementById('excel_preview_tbody');
+    const title = document.getElementById('excel_preview_title');
+    const confirmBtn = document.getElementById('btn_confirm_excel_import');
+
+    if (!previewContainer || !tbody) return;
+
+    tbody.innerHTML = '';
+    let validCount = 0;
+
+    rows.forEach((r, i) => {
+      const id = r.ID || r.id || r.NumberEmployee || (i + 1);
+      const name = r.Nombres ? `${r.Nombres} ${r.Apellidos || ''}`.trim() : (r.name || r.GivenNames || 'Sin Nombre');
+      const pos = r['Cargo / Posición'] || r.Posición || r.position || r.Cargo || 'Empleado';
+      const years = r['Años de Servicio'] || r['Años De Servicios'] || r.years || 0;
+      const email = r['Correo Electrónico'] || r.email || r.Correo || '-';
+      const pin = r['PIN de Acceso'] || r.pin || r.PIN || id.toString().padStart(4, '0');
+
+      validCount++;
+      const tr = document.createElement('tr');
+      tr.style.borderBottom = '1px solid #f1f5f9';
+      tr.innerHTML = `
+        <td style="padding: 10px; font-weight: 700; color: #0284c7;">${id}</td>
+        <td style="padding: 10px; font-weight: 700; color: #1e3a8a;">${name}</td>
+        <td style="padding: 10px; color: #475569;">${pos}</td>
+        <td style="padding: 10px; text-align: center; font-weight: 800; color: #166534;">${years}</td>
+        <td style="padding: 10px; color: #475569;">${email}</td>
+        <td style="padding: 10px; text-align: center; font-weight: 700; color: #334155;">${pin}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    if (title) title.innerText = `Registros Listos para Importar (${validCount})`;
+    previewContainer.style.display = 'flex';
+    if (confirmBtn) confirmBtn.style.display = 'inline-flex';
+  },
+
+  confirmExcelImport: async function() {
+    if (!this.pendingExcelRows || this.pendingExcelRows.length === 0) return;
+    const btn = document.getElementById('btn_confirm_excel_import');
+    if (btn) { btn.disabled = true; btn.innerText = "Importando a Firestore..."; }
+
+    try {
+      const count = await state.bulkSaveEmployees(this.pendingExcelRows);
+      this.showToast(`✅ ${count} Colaboradores importados exitosamente`);
+      const modal = document.getElementById('excel_import_modal');
+      if (modal) modal.style.display = 'none';
+      this.render();
+    } catch(e) {
+      console.error("Error al importar masivamente:", e);
+      alert("⚠️ Error al importar colaboradores a Firestore: " + e.message);
+      if (btn) { btn.disabled = false; btn.innerText = "💾 Confirmar e Importar a Firestore"; }
+    }
   },
 
 
