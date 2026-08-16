@@ -1488,27 +1488,27 @@ const app = {
 
   isPresidentOrSecretary: function() {
     if (!state.user) return false;
-    const dept = (state.user.supervisorDept || '').trim();
+    
     const name = (state.user.name || '').trim().toLowerCase();
     const email = (state.user.email || '').trim().toLowerCase();
     const id = (state.user.id || '').toString();
 
-    // 1. Presidencia Institucional (Geuris Dencil Paulino - ID 42)
+    // EXCLUSIVAMENTE las 2 personas físicas con autoridad ejecutiva:
+    // 1. Presidente: Geuris Dencil Paulino (ID 42 / gdpaulino@gmail.com / sup_presidencia)
     const isPresidente = (
-      dept === 'Presidencia' || 
+      id === '42' || 
+      id === 'sup_presidencia' || 
       email === 'gdpaulino@gmail.com' || 
-      name.includes('geuris') || 
-      id === '42' ||
-      id === 'sup_presidencia'
+      name.includes('geuris paulino') || 
+      name.includes('geuris dencil')
     );
 
-    // 2. Secretaría Institucional (Junior Feliz - ID 17)
+    // 2. Secretario Ejecutivo: Junior Feliz (ID 17 / prjuniorfeliz@gmail.com / sup_secretaría)
     const isSecretario = (
-      dept === 'Secretaría' || 
+      id === '17' || 
+      id === 'sup_secretaría' || 
       email === 'prjuniorfeliz@gmail.com' || 
-      name.includes('junior feliz') || 
-      id === '17' ||
-      id === 'sup_secretaría'
+      name.includes('junior feliz')
     );
 
     return isPresidente || isSecretario;
