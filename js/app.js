@@ -1489,16 +1489,29 @@ const app = {
   isPresidentOrSecretary: function() {
     if (!state.user) return false;
     const dept = (state.user.supervisorDept || '').trim();
-    const pos = (state.user.position || '').trim().toLowerCase();
     const name = (state.user.name || '').trim().toLowerCase();
-    const role = (state.user.role || '').trim().toLowerCase();
+    const email = (state.user.email || '').trim().toLowerCase();
+    const id = (state.user.id || '').toString();
 
-    return (
-      dept === 'Presidencia' || dept === 'Secretaría' ||
-      pos.includes('presidente') || pos.includes('secretario') ||
-      role === 'presidencia' || role === 'secretaría' || role === 'secretaria' ||
-      name.includes('geuris') || name.includes('junior feliz')
+    // 1. Presidencia Institucional (Geuris Dencil Paulino - ID 42)
+    const isPresidente = (
+      dept === 'Presidencia' || 
+      email === 'gdpaulino@gmail.com' || 
+      name.includes('geuris') || 
+      id === '42' ||
+      id === 'sup_presidencia'
     );
+
+    // 2. Secretaría Institucional (Junior Feliz - ID 17)
+    const isSecretario = (
+      dept === 'Secretaría' || 
+      email === 'prjuniorfeliz@gmail.com' || 
+      name.includes('junior feliz') || 
+      id === '17' ||
+      id === 'sup_secretaría'
+    );
+
+    return isPresidente || isSecretario;
   },
 
   logout: function() {
@@ -2370,6 +2383,10 @@ const app = {
   },
 
   togglePositionsEditor: function() {
+    if (!this.isPresidentOrSecretary()) {
+      this.showToast("⚠️ La gestión de roles es exclusiva de la Presidencia y Secretaría.");
+      return;
+    }
     let modal = document.getElementById('positions_editor_modal');
     if (!modal) {
       modal = document.createElement('div');
@@ -2419,6 +2436,10 @@ const app = {
   },
 
   toggleSupervisorsEditor: function() {
+    if (!this.isPresidentOrSecretary()) {
+      this.showToast("⚠️ La asignación de roles e institucionales es exclusiva de la Presidencia y Secretaría.");
+      return;
+    }
     let modal = document.getElementById('supervisors_editor_modal');
     if (!modal) {
       modal = document.createElement('div');
