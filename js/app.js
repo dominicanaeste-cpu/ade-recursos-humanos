@@ -168,7 +168,7 @@ const app = {
                         <p style="color: var(--text-muted); font-weight: 500;">Aquí tienes un resumen de tus solicitudes.</p>
                     </div>
                     <div style="display: flex; gap: 10px; align-items: center;">
-                        ${(state.user && (state.user.supervisorDept === 'Presidencia' || state.user.supervisorDept === 'Secretaría' || (state.user.permissions && (state.user.permissions.includes('hr') || state.user.permissions.includes('manager'))))) ? `
+                        ${app.isPresidentOrSecretary() ? `
                             <button class="btn" style="background: #334155; color: white; font-weight: 800; font-size: 0.8rem; padding: 8px 14px; display: flex; align-items: center; gap: 6px;" onclick="app.toggleSupervisorsEditor()">
                                 <span class="material-symbols-outlined" style="font-size: 1.1rem;">manage_accounts</span>
                                 ⚙️ ROLES E INSTITUCIONALES
@@ -456,16 +456,16 @@ const app = {
                         <p style="color: var(--text-muted); font-weight: 500;">Gestión de solicitudes para: <span style="color: var(--secondary); font-weight: 800;">${roleName.toUpperCase()}</span></p>
                     </div>
                     <div style="display: flex; gap: 12px; align-items: center;">
-                        ${(state.user.supervisorDept === 'Presidencia' || state.user.supervisorDept === 'Secretaría' || (state.user.permissions && state.user.permissions.includes('hr'))) ? `
+                        ${app.isPresidentOrSecretary() ? `
                             <button class="btn" style="background: #334155; color: white; font-weight: 800; display: flex; align-items: center; gap: 6px;" onclick="app.toggleSupervisorsEditor()">
                                 <span class="material-symbols-outlined" style="font-size: 1.1rem;">manage_accounts</span>
                                 ⚙️ ROLES E INSTITUCIONALES
                             </button>
-                            <button class="btn" style="background: #166534; color: white; font-weight: 800; display: flex; align-items: center; gap: 6px;" onclick="app.showExcelImportModal()">
-                                <span class="material-symbols-outlined" style="font-size: 1.1rem;">table_chart</span>
-                                📊 PLANTILLA EXCEL
-                            </button>
                         ` : ''}
+                        <button class="btn" style="background: #166534; color: white; font-weight: 800; display: flex; align-items: center; gap: 6px;" onclick="app.showExcelImportModal()">
+                            <span class="material-symbols-outlined" style="font-size: 1.1rem;">table_chart</span>
+                            📊 PLANTILLA EXCEL
+                        </button>
                         ${state.user.permissions.includes('hr') ? `
                             <button class="btn" style="background: #166534; color: white;" onclick="app.exportAuditPDF(2026)">
                                 <span class="material-symbols-outlined">description</span>
@@ -707,7 +707,9 @@ const app = {
                     </button>
                     <button class="btn" style="background: #0ea5e9; color: white; height: 40px; font-weight: 800;" onclick="app.toggleEmployeeEditor()">👥 GESTIÓN DE PERSONAL</button>
                     <button class="btn" style="background: #1e293b; color: white; height: 40px; font-weight: 800;" onclick="app.togglePositionsEditor()">🛠️ ROLES</button>
-                    <button class="btn" style="background: #334155; color: white; height: 40px; font-weight: 800;" onclick="app.toggleSupervisorsEditor()">⚙️ RESPONSABLES</button>
+                    ${app.isPresidentOrSecretary() ? `
+                        <button class="btn" style="background: #334155; color: white; height: 40px; font-weight: 800;" onclick="app.toggleSupervisorsEditor()">⚙️ RESPONSABLES</button>
+                    ` : ''}
                 </div>
             </div>
 
@@ -1482,6 +1484,21 @@ const app = {
         }, 100);
     }
     console.log("🚀 ADE Vacaciones App Iniciada");
+  },
+
+  isPresidentOrSecretary: function() {
+    if (!state.user) return false;
+    const dept = (state.user.supervisorDept || '').trim();
+    const pos = (state.user.position || '').trim().toLowerCase();
+    const name = (state.user.name || '').trim().toLowerCase();
+    const role = (state.user.role || '').trim().toLowerCase();
+
+    return (
+      dept === 'Presidencia' || dept === 'Secretaría' ||
+      pos.includes('presidente') || pos.includes('secretario') ||
+      role === 'presidencia' || role === 'secretaría' || role === 'secretaria' ||
+      name.includes('geuris') || name.includes('junior feliz')
+    );
   },
 
   logout: function() {
