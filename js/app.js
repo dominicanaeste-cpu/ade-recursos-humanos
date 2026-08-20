@@ -933,7 +933,7 @@ const app = {
                                 <td style="padding: 12px; text-align: center;">
                                     <div style="display: flex; gap: 8px; justify-content: center;">
                                         <button class="btn" style="padding: 6px 12px; font-size: 0.7rem; background: #be185d; color: white;" onclick="app.downloadIndividualConflictoPDF('${d.id}')">BAJAR PDF</button>
-                                        <button class="btn" style="padding: 6px 12px; font-size: 0.7rem; background: #991b1b; color: white;" onclick="app.deleteConflictDeclaration('${d.id}')">ANULAR</button>
+                                        ${!app.isReadOnlyUser() ? `<button class="btn" style="padding: 6px 12px; font-size: 0.7rem; background: #991b1b; color: white;" onclick="app.deleteConflictDeclaration('${d.id}')">ANULAR</button>` : ''}
                                         ${d.pdfUrl || d.cloudPdf ? `<a href="${d.pdfUrl || d.cloudPdf}" target="_blank" class="btn" style="padding: 6px 12px; font-size: 0.7rem; background: #1e293b; color: white; text-decoration: none;">NUBE</a>` : ''}
                                     </div>
                                 </td>
@@ -944,6 +944,7 @@ const app = {
             </div>
         </section>
 
+        ${!app.isReadOnlyUser() ? `
         <section class="card fade-in" style="margin-top: 32px; border-top: 4px solid #94a3b8; background: #f8fafc;">
             <h2 style="font-size: 1.1rem; color: #475569; margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
                 <span class="material-symbols-outlined">delete_sweep</span>
@@ -1512,6 +1513,13 @@ const app = {
     );
 
     return isPresidente || isSecretario;
+  },
+
+  isReadOnlyUser: function() {
+    if (!state.user) return false;
+    const role = (state.user.role || '').toLowerCase();
+    const perms = state.user.permissions || [];
+    return (role === 'assistant' || perms.includes('assistant')) && !perms.includes('manager') && !perms.includes('hr');
   },
 
   logout: function() {
@@ -3409,8 +3417,16 @@ const app = {
           </table>
           <p class="note">* El conteo se realiza basado en Días Calendario. Los días feriados institucionales caídos en periodos de vacaciones se suman al beneficio del empleado según el reglamento.</p>
 
-          <div class="signature-section">
-              <div class="signature-box">SECRETARIO EJECUTIVO</div>
+          <div class="signature-section" style="margin-top: 60px; display: flex; justify-content: space-around; align-items: flex-end; gap: 20px;">
+              <div class="signature-box" style="border-top: 2px solid #1e3a8a; width: 220px; padding-top: 10px; text-align: center; font-size: 11px; font-weight: 700; color: #1e3a8a; text-transform: uppercase;">
+                  DIRECTOR DE RECURSOS HUMANOS
+              </div>
+              <div class="signature-box" style="border-top: 2px solid #1e3a8a; width: 220px; padding-top: 10px; text-align: center; font-size: 11px; font-weight: 700; color: #1e3a8a; text-transform: uppercase;">
+                  SECRETARIO EJECUTIVO
+              </div>
+              <div class="signature-box" style="border-top: 2px solid #1e3a8a; width: 220px; padding-top: 10px; text-align: center; font-size: 11px; font-weight: 700; color: #1e3a8a; text-transform: uppercase;">
+                  PRESIDENTE ADE
+              </div>
           </div>
 
           <div class="footer">

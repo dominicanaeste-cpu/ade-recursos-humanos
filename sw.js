@@ -1,5 +1,5 @@
 // Service Worker para cumplimiento PWA y modo offline (Network-First para datos actualizados)
-const CACHE_NAME = 'ade-v2026-v7-INGRID-FIX';
+const CACHE_NAME = 'ade-v2026-v8-RRHH-SIGN';
 const ASSETS = [
   './',
   './index.html',
