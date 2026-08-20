@@ -3417,15 +3417,12 @@ const app = {
           </table>
           <p class="note">* El conteo se realiza basado en Días Calendario. Los días feriados institucionales caídos en periodos de vacaciones se suman al beneficio del empleado según el reglamento.</p>
 
-          <div class="signature-section" style="margin-top: 60px; display: flex; justify-content: space-around; align-items: flex-end; gap: 20px;">
-              <div class="signature-box" style="border-top: 2px solid #1e3a8a; width: 220px; padding-top: 10px; text-align: center; font-size: 11px; font-weight: 700; color: #1e3a8a; text-transform: uppercase;">
+          <div class="signature-section" style="margin-top: 60px; display: flex; justify-content: space-around; align-items: flex-end; gap: 40px; max-width: 700px; margin-left: auto; margin-right: auto;">
+              <div class="signature-box" style="border-top: 2px solid #1e3a8a; width: 260px; padding-top: 10px; text-align: center; font-size: 12px; font-weight: 700; color: #1e3a8a; text-transform: uppercase;">
                   DIRECTOR DE RECURSOS HUMANOS
               </div>
-              <div class="signature-box" style="border-top: 2px solid #1e3a8a; width: 220px; padding-top: 10px; text-align: center; font-size: 11px; font-weight: 700; color: #1e3a8a; text-transform: uppercase;">
+              <div class="signature-box" style="border-top: 2px solid #1e3a8a; width: 260px; padding-top: 10px; text-align: center; font-size: 12px; font-weight: 700; color: #1e3a8a; text-transform: uppercase;">
                   SECRETARIO EJECUTIVO
-              </div>
-              <div class="signature-box" style="border-top: 2px solid #1e3a8a; width: 220px; padding-top: 10px; text-align: center; font-size: 11px; font-weight: 700; color: #1e3a8a; text-transform: uppercase;">
-                  PRESIDENTE ADE
               </div>
           </div>
 
