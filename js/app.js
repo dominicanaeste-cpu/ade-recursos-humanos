@@ -975,6 +975,7 @@ const app = {
                 </table>
             </div>
         </section>
+        ` : ''}
       `;
     },
 
