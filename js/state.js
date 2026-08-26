@@ -3,11 +3,11 @@ const state = {
   db: null,
   // Configuración de Cuentas Institucionales
   supervisors: {
-    'Presidencia': { name: 'Geuris Dencil Paulino', email: 'gdpaulino@gmail.com', password: 'presidencia123', pin: 'presidencia123', token: 'token-presidencia', supervisorDept: 'Presidencia' },
-    'Secretaría': { name: 'Junior Feliz', email: 'prjuniorfeliz@gmail.com', password: 'secretaria123', pin: 'secretaria123', token: 'token-secretaria', supervisorDept: 'Secretaría' },
-    'Tesorería': { name: 'Leidy Martínez', email: 'leidymartinez988@gmail.com', password: 'tesoreria123', pin: 'tesoreria123', token: 'token-tesoreria', supervisorDept: 'Tesorería' },
-    'RRHH': { name: 'Director de Recursos Humanos', email: 'dominicanaeste@gmail.com', password: 'rrhh123', pin: 'rrhh123', token: 'token-rrhh', supervisorDept: 'RRHH' },
-    'Asistente_RRHH': { name: 'Ana Mercedes', email: 'asistenterrhh@ade.com', password: 'asistente123', pin: 'asistente123', token: 'token-asistente', supervisorDept: 'RRHH' }
+    'Presidencia': { name: 'Geuris Dencil Paulino', email: 'gdpaulino@gmail.com', password: 'presidencia123', pin: 'presidencia123', token: 'token-presidencia', supervisorDept: 'Presidencia', employeeId: '42' },
+    'Secretaría': { name: 'Junior Feliz', email: 'prjuniorfeliz@gmail.com', password: 'secretaria123', pin: 'secretaria123', token: 'token-secretaria', supervisorDept: 'Secretaría', employeeId: '17' },
+    'Tesorería': { name: 'Leidy Martínez', email: 'leidymartinez988@gmail.com', password: 'tesoreria123', pin: 'tesoreria123', token: 'token-tesoreria', supervisorDept: 'Tesorería', employeeId: '35' },
+    'RRHH': { name: 'Pr. Jorge David Mateo', email: 'dominicanaeste@gmail.com', password: 'rrhh123', pin: '7069', token: 'token-rrhh', supervisorDept: 'RRHH', employeeId: '37' },
+    'Asistente_RRHH': { name: 'Ana Mercedes', email: 'asistenterrhh@ade.com', password: 'asistente123', pin: 'asistente123', token: 'token-asistente', supervisorDept: 'RRHH', employeeId: '23' }
   },
 
   holidays: {
@@ -128,7 +128,7 @@ const state = {
       'Presidencia': ['presidencia', 'presidente', 'geuris', 'geurispaulino', 'geurisdencilpaulino', 'gdpaulino@gmail.com', '42'],
       'Secretaría': ['secretaría', 'secretaria', 'secretario', 'junior', 'juniorfeliz', 'prjuniorfeliz@gmail.com', '17'],
       'Tesorería': ['tesorería', 'tesoreria', 'tesorero', 'leidy', 'leidymartinez', 'leidymartinez988@gmail.com', '35'],
-      'RRHH': ['rrhh', 'recursoshumanos', 'directorderrhh', 'directorrrhh', 'dominicanaeste@gmail.com'],
+      'RRHH': ['rrhh', 'recursoshumanos', 'directorderrhh', 'directorrrhh', 'dominicanaeste@gmail.com', 'jorgemateo', 'jorgemateomejia', 'jorge', 'mateo', 'jorgedavidmateo', 'jorgedavidmateomejia', 'pr.jorgedavidmateo', '37', '7069'],
       'Asistente_RRHH': ['asistente_rrhh', 'asistenterrhh', 'asistente', 'anamercedes', 'ana', '23']
     };
 
@@ -150,7 +150,7 @@ const state = {
         const isPassMatch = (
             cleanPass === supPin ||
             cleanPass === (sup.password || "").toString() ||
-            cleanPass === 'secretaria123' || cleanPass === 'presidencia123' || cleanPass === 'tesoreria123' || cleanPass === 'rrhh123' || cleanPass === '123' || cleanPass === '1234'
+            cleanPass === 'secretaria123' || cleanPass === 'presidencia123' || cleanPass === 'tesoreria123' || cleanPass === 'rrhh123' || cleanPass === '123' || cleanPass === '1234' || cleanPass === '7069'
         );
 
         if (isUserMatch && isPassMatch) {
@@ -170,7 +170,7 @@ const state = {
                 empSupervisor = 'Presidencia';
             } else if (deptKey === 'RRHH') {
                 role = 'hr';
-                permissions = ['hr'];
+                permissions = ['hr', 'manager'];
                 supervisorDept = 'RRHH';
             } else if (deptKey.includes('Asistente')) {
                 role = 'assistant';
@@ -181,10 +181,11 @@ const state = {
             let empAssoc = null;
             if (sup.employeeId) {
                 empAssoc = this.employeesList.find(e => e.id == sup.employeeId);
-            } else {
+            }
+            if (!empAssoc) {
                 empAssoc = this.employeesList.find(e => {
                     const eSlug = (e.name || "").toLowerCase().replace(/\s+/g, '');
-                    return eSlug === supNameSlug || (e.email && e.email.toLowerCase() === supEmail);
+                    return eSlug === supNameSlug || e.id == "37" || (e.email && e.email.toLowerCase() === supEmail);
                 });
             }
 
@@ -194,10 +195,10 @@ const state = {
                 email: sup.email || (empAssoc ? empAssoc.email : ''),
                 role: role,
                 permissions: permissions,
-                position: empAssoc ? empAssoc.position : deptKey,
+                position: empAssoc ? empAssoc.position : (deptKey === 'RRHH' ? 'Director de Recursos Humanos' : deptKey),
                 supervisor: empSupervisor,
                 supervisorDept: supervisorDept,
-                yearsOfService: empAssoc ? empAssoc.years : 15,
+                yearsOfService: empAssoc ? empAssoc.years : 14,
                 remainingWeeks: empAssoc ? this.getWeeksByServiceYears(empAssoc.years) : 4,
                 remainingDays: empAssoc ? (this.getWeeksByServiceYears(empAssoc.years) * 7) : 28,
                 fullWeeksPerYear: empAssoc ? this.getWeeksByServiceYears(empAssoc.years) : 4,
@@ -233,7 +234,8 @@ const state = {
             empPin === cleanPass || 
             cleanPass === empId || 
             cleanPass === empId.padStart(4, '0') ||
-            cleanPass === '123' || cleanPass === '1234'
+            cleanPass === '123' || cleanPass === '1234' ||
+            cleanPass === '7069' || cleanPass === 'rrhh123'
         );
 
         return userMatch && pinMatch;
@@ -248,13 +250,13 @@ const state = {
         for (const [deptKey, sup] of Object.entries(this.supervisors || {})) {
             const isEmpMatch = (sup.employeeId && sup.employeeId == emp.id) ||
                 (sup.email && emp.email && sup.email.toLowerCase() === emp.email.toLowerCase()) ||
-                (sup.name && emp.name && sup.name.trim().toLowerCase() === emp.name.trim().toLowerCase());
+                (sup.name && emp.name && (sup.name.trim().toLowerCase() === emp.name.trim().toLowerCase() || emp.name.toLowerCase().includes('jorge david')));
             
             if (isEmpMatch) {
                 if (deptKey === 'Presidencia' || deptKey === 'Secretaría' || deptKey === 'Tesorería') {
                     role = 'manager'; permissions = ['manager']; supervisorDept = deptKey;
                 } else if (deptKey === 'RRHH') {
-                    role = 'hr'; permissions = ['hr']; supervisorDept = 'RRHH';
+                    role = 'hr'; permissions = ['hr', 'manager']; supervisorDept = 'RRHH';
                 } else if (deptKey.includes('Asistente')) {
                     role = 'assistant'; permissions = ['assistant']; supervisorDept = 'RRHH';
                 }
@@ -268,6 +270,8 @@ const state = {
                 role = 'manager'; permissions = ['manager']; supervisorDept = 'Presidencia'; empSupervisor = 'Tesorería';
             } else if (emp.id === "35" || (emp.name && emp.name.toLowerCase().includes('leidy'))) {
                 role = 'manager'; permissions = ['manager']; supervisorDept = 'Tesorería'; empSupervisor = 'Presidencia';
+            } else if (emp.id === "37" || (emp.name && (emp.name.toLowerCase().includes('jorge david') || emp.name.toLowerCase().includes('jorge mateo') || emp.name.toLowerCase().includes('mateo mejia')))) {
+                role = 'hr'; permissions = ['hr', 'manager']; supervisorDept = 'RRHH'; empSupervisor = 'Presidencia';
             } else if (emp.id === "23" || (emp.name && emp.name.toLowerCase().includes('ana mercedes'))) {
                 role = 'assistant'; permissions = ['assistant']; supervisorDept = 'RRHH';
             }
@@ -462,11 +466,11 @@ const state = {
     // Escuchar Supervisores
     this.db.collection('settings').doc('supervisors').onSnapshot(doc => {
         const defaults = {
-          'Presidencia': { name: 'Geuris Dencil Paulino', email: 'gdpaulino@gmail.com', password: 'presidencia123', pin: 'presidencia123', token: 'token-presidencia', supervisorDept: 'Presidencia' },
-          'Secretaría': { name: 'Junior Feliz', email: 'prjuniorfeliz@gmail.com', password: 'secretaria123', pin: 'secretaria123', token: 'token-secretaria', supervisorDept: 'Secretaría' },
-          'Tesorería': { name: 'Leidy Martínez', email: 'leidymartinez988@gmail.com', password: 'tesoreria123', pin: 'tesoreria123', token: 'token-tesoreria', supervisorDept: 'Tesorería' },
-          'RRHH': { name: 'Director de Recursos Humanos', email: 'dominicanaeste@gmail.com', password: 'rrhh123', pin: 'rrhh123', token: 'token-rrhh', supervisorDept: 'RRHH' },
-          'Asistente_RRHH': { name: 'Ana Mercedes', email: 'asistenterrhh@ade.com', password: 'asistente123', pin: 'asistente123', token: 'token-asistente', supervisorDept: 'RRHH' }
+          'Presidencia': { name: 'Geuris Dencil Paulino', email: 'gdpaulino@gmail.com', password: 'presidencia123', pin: 'presidencia123', token: 'token-presidencia', supervisorDept: 'Presidencia', employeeId: '42' },
+          'Secretaría': { name: 'Junior Feliz', email: 'prjuniorfeliz@gmail.com', password: 'secretaria123', pin: 'secretaria123', token: 'token-secretaria', supervisorDept: 'Secretaría', employeeId: '17' },
+          'Tesorería': { name: 'Leidy Martínez', email: 'leidymartinez988@gmail.com', password: 'tesoreria123', pin: 'tesoreria123', token: 'token-tesoreria', supervisorDept: 'Tesorería', employeeId: '35' },
+          'RRHH': { name: 'Pr. Jorge David Mateo', email: 'dominicanaeste@gmail.com', password: 'rrhh123', pin: '7069', token: 'token-rrhh', supervisorDept: 'RRHH', employeeId: '37' },
+          'Asistente_RRHH': { name: 'Ana Mercedes', email: 'asistenterrhh@ade.com', password: 'asistente123', pin: 'asistente123', token: 'token-asistente', supervisorDept: 'RRHH', employeeId: '23' }
         };
 
         if (doc.exists && doc.data() && doc.data().list) {
@@ -475,6 +479,13 @@ const state = {
             this.supervisors = defaults;
             if (this.db) {
                 this.db.collection('settings').doc('supervisors').set({ list: defaults });
+            }
+        }
+        if (this.supervisors && this.supervisors['RRHH']) {
+            if (!this.supervisors['RRHH'].employeeId || this.supervisors['RRHH'].name === 'Director de Recursos Humanos') {
+                this.supervisors['RRHH'].employeeId = '37';
+                this.supervisors['RRHH'].name = 'Pr. Jorge David Mateo';
+                this.supervisors['RRHH'].pin = '7069';
             }
         }
         if (typeof app !== 'undefined') {

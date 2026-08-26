@@ -188,7 +188,7 @@ const app = {
             const recent = (state.conflictDeclarations || []).filter(d => {
                 const date = d.createdAt ? (d.createdAt.seconds ? new Date(d.createdAt.seconds * 1000) : new Date(d.createdAt)) : new Date();
                 const isMine = d.userId === state.user.id || d.idEmpleado === state.user.id || d.employeeId === state.user.id;
-                const isInstitutionalUser = (state.user.role === 'assistant' || state.user.role === 'hr') || (state.user.permissions && (state.user.permissions.includes('hr') || state.user.permissions.includes('assistant')));
+                const isInstitutionalUser = (state.user.role === 'assistant' || app.isHR()) || (state.user.permissions && (state.user.permissions.includes('hr') || state.user.permissions.includes('assistant')));
                 return date >= fiveDaysAgo && (isMine || isInstitutionalUser);
             });
             if (recent.length === 0) return '';
@@ -199,7 +199,7 @@ const app = {
                             <span class="material-symbols-outlined">notifications_active</span>
                             🔔 Notificaciones Recientes (Últimos 5 días)
                         </h3>
-                        ${recent.length > 1 && (state.user.role === 'assistant' || (state.user.permissions && state.user.permissions.includes('hr'))) ? `
+                        ${recent.length > 1 && (state.user.role === 'assistant' || app.isHR() || (state.user.permissions && state.user.permissions.includes('hr'))) ? `
                             <button class="btn" style="padding: 2px 10px; font-size: 0.65rem; background: white; color: #be185d; border: 1px solid #be185d;" onclick="app.downloadConflictBatch()">Descargar Todo</button>
                         ` : ''}
                     </div>
@@ -230,10 +230,10 @@ const app = {
                 <div class="value">${(state.user.remainingDays || 0).toString().padStart(2, '0')}</div>
                 <p style="font-size: 0.7rem; color: var(--tertiary); margin-top: 4px;">Balance oficial institucional</p>
             </div>
-            ${(state.user && state.user.permissions && state.user.permissions.length > 0 || (state.user && state.user.role !== 'employee')) ? `
+            ${(state.user && (state.user.permissions && state.user.permissions.length > 0 || state.user.role !== 'employee' || app.isHR())) ? `
             <div class="stat-card" style="border-left-color: var(--secondary);">
                 <h3>Solicitudes por Aprobar</h3>
-                <div class="value">${((state.vacationRequests || []).filter(r => (r.status === 'pending' && r.supervisor === state.user.name) || (r.status === 'pending_hr' && state.user.permissions && state.user.permissions.includes('hr'))).length).toString().padStart(2, '0')}</div>
+                <div class="value">${((state.vacationRequests || []).filter(r => (r.status === 'pending' && (r.supervisor === state.user.name || r.supervisor === state.user.supervisorDept)) || (r.status === 'pending_hr' && app.isHR())).length).toString().padStart(2, '0')}</div>
                 <p style="font-size: 0.7rem; color: var(--secondary); margin-top: 4px;">Pendientes de su firma</p>
             </div>
             ` : ''}
@@ -456,7 +456,7 @@ const app = {
                         <p style="color: var(--text-muted); font-weight: 500;">Gestión de solicitudes para: <span style="color: var(--secondary); font-weight: 800;">${roleName.toUpperCase()}</span></p>
                     </div>
                     <div style="display: flex; gap: 12px; align-items: center;">
-                        ${app.isPresidentOrSecretary() ? `
+                        ${(app.isPresidentOrSecretary() || app.isHR()) ? `
                             <button class="btn" style="background: #334155; color: white; font-weight: 800; display: flex; align-items: center; gap: 6px;" onclick="app.toggleSupervisorsEditor()">
                                 <span class="material-symbols-outlined" style="font-size: 1.1rem;">manage_accounts</span>
                                 ⚙️ ROLES E INSTITUCIONALES
@@ -466,7 +466,7 @@ const app = {
                             <span class="material-symbols-outlined" style="font-size: 1.1rem;">table_chart</span>
                             📊 PLANTILLA EXCEL
                         </button>
-                        ${state.user.permissions.includes('hr') ? `
+                        ${app.isHR() ? `
                             <button class="btn" style="background: #166534; color: white;" onclick="app.exportAuditPDF(2026)">
                                 <span class="material-symbols-outlined">description</span>
                                 Reporte 60 Empleados
@@ -707,7 +707,7 @@ const app = {
                     </button>
                     <button class="btn" style="background: #0ea5e9; color: white; height: 40px; font-weight: 800;" onclick="app.toggleEmployeeEditor()">👥 GESTIÓN DE PERSONAL</button>
                     <button class="btn" style="background: #1e293b; color: white; height: 40px; font-weight: 800;" onclick="app.togglePositionsEditor()">🛠️ ROLES</button>
-                    ${app.isPresidentOrSecretary() ? `
+                    ${(app.isPresidentOrSecretary() || app.isHR()) ? `
                         <button class="btn" style="background: #334155; color: white; height: 40px; font-weight: 800;" onclick="app.toggleSupervisorsEditor()">⚙️ RESPONSABLES</button>
                     ` : ''}
                 </div>
@@ -784,7 +784,7 @@ const app = {
                             <th style="padding: 16px; font-size: 0.75rem; text-transform: uppercase; color: #64748b; font-weight: 800;">Regreso</th>
                             <th style="padding: 16px; font-size: 0.75rem; text-transform: uppercase; color: #64748b; font-weight: 800; text-align: center;">Días p/ Regreso</th>
                             <th style="padding: 16px; font-size: 0.75rem; text-transform: uppercase; color: #64748b; font-weight: 800; text-align: center;">Estado</th>
-                            ${(state.user && (state.user.role === 'hr' || (state.user.permissions && state.user.permissions.includes('hr')))) ? '<th style="padding: 16px; font-size: 0.75rem; text-transform: uppercase; color: #64748b; font-weight: 800; text-align: center;">ANULAR</th>' : ''}
+                            ${app.isHR() ? '<th style="padding: 16px; font-size: 0.75rem; text-transform: uppercase; color: #64748b; font-weight: 800; text-align: center;">ANULAR</th>' : ''}
                         </tr>
                     </thead>
                     <tbody>
@@ -793,7 +793,7 @@ const app = {
                             const sorted = approved.sort((a,b) => new Date(a.startDate) - new Date(b.startDate));
                             const today = new Date().toISOString().split('T')[0];
                             
-                            const isHR = state.user && (state.user.role === 'hr' || (state.user.permissions && state.user.permissions.includes('hr')));
+                            const isHR = app.isHR();
 
                             if (sorted.length === 0) return `<tr><td colspan="${isHR ? 6 : 5}" style="text-align:center; padding:32px; color:#64748b;">No hay movimientos aprobados registrados aún.</td></tr>`;
                             
@@ -1516,6 +1516,15 @@ const app = {
     return isPresidente || isSecretario;
   },
 
+  isHR: function() {
+    if (!state.user) return false;
+    const role = (state.user.role || '').toLowerCase();
+    const perms = state.user.permissions || [];
+    const name = (state.user.name || '').toLowerCase();
+    const id = (state.user.id || '').toString();
+    return role === 'hr' || role === 'rrhh' || perms.includes('hr') || id === '37' || id === 'sup_rrhh' || name.includes('jorge david') || name.includes('jorge mateo') || state.user.supervisorDept === 'RRHH';
+  },
+
   isReadOnlyUser: function() {
     if (!state.user) return false;
     const role = (state.user.role || '').toLowerCase();
@@ -1611,19 +1620,20 @@ const app = {
 
     const permissions = (state.user && state.user.permissions) ? state.user.permissions : [];
     const userRole = (state.user && state.user.role) ? state.user.role : '';
+    const isHR = this.isHR();
     
     const mgr = document.getElementById('nav-manager');
     const hr = document.getElementById('nav-hr');
     const asst = document.getElementById('nav-assistant');
 
     if (mgr) {
-        mgr.style.display = (permissions.includes('manager') || userRole === 'manager' || userRole === 'hr') ? 'flex' : 'none';
+        mgr.style.display = (permissions.includes('manager') || userRole === 'manager' || isHR) ? 'flex' : 'none';
         const label = mgr.querySelector('span:last-child');
         if (label && state.user) label.innerText = (state.user.supervisorDept || 'Director');
     }
-    if (hr) hr.style.display = (permissions.includes('hr') || userRole === 'hr') ? 'flex' : 'none';
+    if (hr) hr.style.display = isHR ? 'flex' : 'none';
 
-    if (asst) asst.style.display = (permissions.includes('assistant') || state.user.role === 'assistant' || state.user.role === 'hr' || permissions.includes('hr')) ? 'flex' : 'none';
+    if (asst) asst.style.display = (permissions.includes('assistant') || state.user.role === 'assistant' || isHR) ? 'flex' : 'none';
 
     // MOBILE NAV SYNC
     const mobileNav = document.getElementById('mobile-nav');
@@ -1637,11 +1647,11 @@ const app = {
         } else {
             // Actualizar visibilidad segun permisos
             if (moblMgr) {
-                moblMgr.style.display = (permissions.includes('manager') || state.user.role === 'manager') ? 'flex' : 'none';
+                moblMgr.style.display = (permissions.includes('manager') || userRole === 'manager' || isHR) ? 'flex' : 'none';
                 const lbl = document.getElementById('mobl-mgr-label');
-                if (lbl) lbl.innerText = state.user.supervisorDept || 'Director';
+                if (lbl) lbl.innerText = state.user ? (state.user.supervisorDept || 'Director') : 'Director';
             }
-            if (moblHR) moblHR.style.display = (permissions.includes('hr') || state.user.role === 'hr') ? 'flex' : 'none';
+            if (moblHR) moblHR.style.display = isHR ? 'flex' : 'none';
             
             // Highlight active mobile tab
             [moblHome, moblMgr, moblHR].forEach(item => {
@@ -1757,10 +1767,10 @@ const app = {
             
             let targetView = 'dashboard';
             // Mapear roles antiguos a vistas
-            if (['Presidencia', 'Secretaría', 'Tesorería'].includes(userUser.role) || userUser.role === 'manager') {
-                targetView = 'manager';
-            } else if (userUser.role === 'RRHH' || userUser.role === 'hr') {
+            if (userUser.role === 'RRHH' || userUser.role === 'hr' || (userUser.permissions && userUser.permissions.includes('hr')) || userUser.id === '37') {
                 targetView = 'hr';
+            } else if (['Presidencia', 'Secretaría', 'Tesorería'].includes(userUser.role) || userUser.role === 'manager' || (userUser.permissions && userUser.permissions.includes('manager'))) {
+                targetView = 'manager';
             } else if (userUser.role === 'assistant') {
                 targetView = 'assistant';
             }
@@ -2445,8 +2455,8 @@ const app = {
   },
 
   toggleSupervisorsEditor: function() {
-    if (!this.isPresidentOrSecretary()) {
-      this.showToast("⚠️ La asignación de roles e institucionales es exclusiva de la Presidencia y Secretaría.");
+    if (!this.isPresidentOrSecretary() && !this.isHR()) {
+      this.showToast("⚠️ La asignación de roles e institucionales es exclusiva de la Presidencia, Secretaría y RRHH.");
       return;
     }
     let modal = document.getElementById('supervisors_editor_modal');
@@ -4292,7 +4302,7 @@ const app = {
                             <th style="padding: 18px; font-weight: 800; color: #475569;">DEPARTAMENTO / RESPONSABLE</th>
                             <th style="padding: 18px; font-weight: 800; color: #475569; text-align: center;">DÍAS</th>
                             <th style="padding: 18px; font-weight: 800; color: #475569; text-align: center;">ARCHIVO</th>
-                            ${(state.user.role === 'hr' || (state.user.permissions && state.user.permissions.includes('hr'))) ? '<th style="padding: 18px; font-weight: 800; color: #475569; text-align: center;">ANULAR</th>' : ''}
+                            ${app.isHR() ? '<th style="padding: 18px; font-weight: 800; color: #475569; text-align: center;">ANULAR</th>' : ''}
                         </tr>
                     </thead>
                     <tbody>
@@ -4311,7 +4321,7 @@ const app = {
                                         📄 PDF
                                     </button>
                                 </td>
-                                ${(state.user.role === 'hr' || (state.user.permissions && state.user.permissions.includes('hr'))) ? `
+                                ${app.isHR() ? `
                                 <td style="padding: 14px 18px; text-align: center;">
                                     <button class="btn" style="padding: 6px 12px; background: #fee2e2; color: #991b1b; font-size: 0.75rem; border: 1px solid #fecaca;" onclick="app.deleteAnnualPlan('${p.id}')">
                                         🗑️ ANULAR
